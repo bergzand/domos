@@ -1,5 +1,6 @@
 #ignore kdevelop files
 *.kdev4
+*.kate-swp
 #ignore local config files
 *.conf
 #pycache files

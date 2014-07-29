@@ -23,7 +23,7 @@ class BaseModel(Model):
 class Module(BaseModel):
     name = CharField()
     queue = CharField()
-
+    Active = BooleanField()
 
 class RPCTypes(BaseModel):
     rpctype = CharField()
@@ -45,7 +45,8 @@ class RPCArgs(BaseModel):
 class Sensors(BaseModel):
     Module = ForeignKeyField(Module)
     ident = CharField()
-
+    Active = BooleanField(default=True)
+    
     def last(self, num=1):
         #returns the last - num value from the database
         selection = SensorValues.select().where(Sensors.id == self.id)
@@ -58,7 +59,7 @@ class Sensors(BaseModel):
 
 
 class SensorValues(BaseModel):
-    Sensor = ForeignKeyField(Sensors)
+    Sensor = ForeignKeyField(Sensors, on_delete='CASCADE')
     Value = CharField()
     Timestamp = DateTimeField(default=datetime.datetime.now)
     descr = None
@@ -68,7 +69,7 @@ class SensorValues(BaseModel):
 
 
 class SensorArgs(BaseModel):
-    Sensor = ForeignKeyField(Sensors)
+    Sensor = ForeignKeyField(Sensors, on_delete='CASCADE')
     RPCArg = ForeignKeyField(RPCArgs)
     Value = CharField()
 
@@ -81,7 +82,8 @@ class Actions(BaseModel):
 class ActionArgs(BaseModel):
     Sensor = ForeignKeyField(Sensors)
     Arg = CharField()
-    Value = CharField(null=True)
+    Optional = BooleanField
+
 
 
 def create_tables():
@@ -93,6 +95,8 @@ def create_tables():
         Sensors.create_table()
         SensorValues.create_table()
         SensorArgs.create_table()
+        Actions.create_table()
+        ActionArgs.create_table()
     except InternalError:
         pass
 

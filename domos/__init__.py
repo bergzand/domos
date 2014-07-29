@@ -24,39 +24,42 @@ class messagehandler(multiprocessing.Process):
         self.dashi.handle(self.sensorValue, "sensorValue")
         self.dashi.handle(self.addSensor, "addSensor")
         self.dashi.handle(self.getSensorValue, "getSensorValue")
+        self.dashi.handle(self.activateAllSensors, "sendAllSensors")
 
         self.logmsg("info", "Initializing database")
         
-        ldb = db
-        try:
-            ldb.connect()
-            create_tables()
-            init_tables()
-        finally:
-            ldb.close()
+        self.db = db
+        self.db.connect()
+        create_tables()
+        init_tables()
+        
+        modules = Module.select()
+        for module in modules:
+            module.Active = True
+            module.save()
         self.logmsg("info", "Done initializing database")
     
 
     def getSensorValue(self, sensor_id):
-        ldb = db
         sensor = Sensors.get_by_id(sensor_id)
-        print(sensor.last())
+        return sensor.last()
 
     def logmsg(self, level, msg):
         call = 'log_{}'.format(level)
         self.dashi.fire(ds.LOGNAME, 'log_debug', msg=msg, handle='core' )
 
     def register(self, data=None):
-        ldb = db
-        ldb.connect()
         try:
-            if Module.get(Module.name == data['name']):
-                self.logmsg("info", "Already registered module {} found".format(data['name']))
+            module = Module.get(Module.name == data['name'])
+            module.Activate = True
+            module.save()
+            self.logmsg("info", "Already registered module {} found, activated module".format(data['name']))
         except DoesNotExist:
             self.logmsg('info', 'Registering {} module'.format(data['name']))
             module = Module()
             module.name = data['name']
             module.queue = data['queue']
+            module.active = True
             module.save()
             for rpc in data['rpc']:
                 newrpc = ModuleRPC()
@@ -71,13 +74,10 @@ class messagehandler(multiprocessing.Process):
                         newarg.RPCargtype = arg['type']
                         newarg.ModuleRPC = newrpc
                         newarg.save()
-        ldb.close()
         return True
 
     def addSensor(self, module_id=0, data=None, send=False):
         #add sensor to the database, if send is True, also send it to the module
-        ldb = db
-        ldb.connect()
         self.logmsg('info', 'adding sensor from module {0} with ident {1}'.format(module_id, data['ident']))
         sensor = Sensors()
         sensor.ident = data['ident']
@@ -93,23 +93,17 @@ class messagehandler(multiprocessing.Process):
                 arg = {'Sensor': sensor, 'RPCArg': rpcarg, 'Value': data[rpcarg.name]}
                 argdata.append(arg)
                 #TODO: missing key exceptions and handling
-        with ldb.transaction():
+        with self.db.transaction():
             SensorArgs.insert_many(argdata).execute()
-        ldb.close()
         sensargs = SensorArgs.select().where(Sensors.id == sensor.id)
-        for sensarg in sensargs:
-            print(sensarg.Value)
         if send:
             self.sendSensor(sensor.id, sensor.ident)
 
     def sendSensor(self, sensor_id=0, ident="desc"):
         #send sensor definition to the module
-        ldb = db
-        ldb.connect()
         self.logmsg("Debug", "Sensor send function called")
         kwargs = dict()
         sensor = Sensors.get_by_id(sensor_id)
-
         def _getdict(kwarg, key, value):
             if len(key.split('.', 1)) > 1:
                 start, end = key.split('.', 1)
@@ -133,17 +127,13 @@ class messagehandler(multiprocessing.Process):
         rpctyp = RPCTypes.get(RPCTypes.rpctype == 'add')
         rpcdata = ModuleRPC.select().where((rpctyp.id == ModuleRPC.RPCType) &
                                           (ModuleRPC.Module == sendmod.id))
-        ldb.close()
         for key in rpcdata:
             rpckey = key
-        print('args=',kwargs)
         self.dashi.call(queue, rpckey.Key, **kwargs )
 
     def sensorValue(self, data=None):
         #print(data)
         try:
-            ldb = db
-            ldb.connect()
             self.logmsg('debug', 'logging trigger value for {0} with value {1}'.format(data['ident'],data['value']))
             sensor = Sensors.get_by_id(data['key'])
             value = SensorValues()
@@ -152,8 +142,16 @@ class messagehandler(multiprocessing.Process):
             value.save()
         except:
             self.logmsg('warn', 'Something went wrong registering trigger value for {0}'.format(data['ident']))
-        finally:
-            ldb.close()
+
+    def activateAllSensors(self, module_id=None):
+        #todo send only for active modules
+        if module_id:
+            allsensors = Sensors.select().join(Module).where(Sensors.Active == True & Module.id == module_id)
+        else:
+            self.logmsg('info','Sending all activated sensors')
+            allsensors = Sensors.select().join(Module).where(Sensors.Active == True & Module.Active == True)
+        for sensor in allsensors:
+            self.sendSensor(sensor.id, sensor.ident)
 
     def run(self):
         self.logmsg("info", "starting Dashi consumer")
@@ -183,9 +181,10 @@ class domos:
 
         #kwargs = {'key': 'test', 'ident': 'testMain', 'jobtype': 'Toggle', 'start': {'second': '10,30,50'}, 'stop': {'second':'0,20,40'}}
 
-        moduleargs = {'module_id': 1, 'send': True, 'data': {'ident': 'Sensortest', 'start.second': '*/10' }}
-        msgh.dashi.call('domoscore', 'addSensor', **moduleargs)
-        print(msgh.dashi.call('domosTime','getTimers'))
-        print(msgh.dashi.call('domoscore','getSensorValue', **{'sensor_id': 1}))
+        #moduleargs = {'module_id': 1, 'send': True, 'data': {'ident': 'Sensortest', 'start.second': '*/10' }}
+        #msgh.dashi.call('domoscore', 'addSensor', **moduleargs)
+        msgh.dashi.call('domoscore', 'sendAllSensors')
+        #print(msgh.dashi.call('domosTime','getTimers'))
+        #print(msgh.dashi.call('domoscore','getSensorValue', **{'sensor_id': 1}))
 
         msgh.join()
