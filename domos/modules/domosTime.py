@@ -54,7 +54,8 @@ class domosTime(Process):
         self.done = False
         self.name = 'domosTime'
         self._items = []
-        self.dashi = DashiConnection(self.name, ds.AMQP_URI, ds.EXCHANGE, sysname = ds.SYSNAME)
+        dashiconfig = domosSettings.getDashiConfig()
+        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
         self._sched = BackgroundScheduler()
         self.logmsg('debug','Initializing scheduler')
         self.dashi.handle(self.getJobs, "getTimers")
