@@ -6,7 +6,7 @@ from dashi import DashiConnection
 import socket
 from multiprocessing import Process
 from datetime import datetime
-from apscheduler.scheduler import Scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 
 ROUTING_KEY = 'sensor.time'
 CONTROL_KEY = 'control.time'
@@ -55,7 +55,7 @@ class domosTime(Process):
         self.name = 'domosTime'
         self._items = []
         self.dashi = DashiConnection(self.name, ds.AMQP_URI, ds.EXCHANGE, sysname = ds.SYSNAME)
-        self._sched = Scheduler(standalone=False)
+        self._sched = BackgroundScheduler()
         self.logmsg('debug','Initializing scheduler')
         self.dashi.handle(self.getJobs, "getTimers")
         self.dashi.handle(self.getJob, "getTimer")
