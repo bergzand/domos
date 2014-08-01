@@ -115,7 +115,8 @@ class messagehandler(threading.Thread):
                 return kwarg
             else:
                 return {key: value}
-        sensorargs = SensorArgs.select().where(Sensors.id == sensor_id)
+        sensorargs = SensorArgs.select().where(SensorArgs.Sensor == sensor_id)
+        print(sensorargs)
         kwargs = {}
         for sensorarg in sensorargs:
             value = sensorarg.Value
