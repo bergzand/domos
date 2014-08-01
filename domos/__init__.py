@@ -11,10 +11,10 @@ from time import sleep
 from domos.util.db import *
 
 
-class messagehandler(multiprocessing.Process):
+class messagehandler(threading.Thread):
 
     def __init__(self):
-        multiprocessing.Process.__init__(self)
+        threading.Thread.__init__(self)
         self.done = False
         self.name = 'domoscore'
         dashiconfig = domosSettings.getDashiConfig()

@@ -47,10 +47,10 @@ DOMOSTIME_DICT = {
 }
 
 
-class domosTime(Process):
+class domosTime(Thread):
 
     def __init__(self):
-        Process.__init__(self)
+        Thread.__init__(self)
         self.done = False
         self.name = 'domosTime'
         self._items = []
