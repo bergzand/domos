@@ -50,11 +50,18 @@ class messagehandler(threading.Thread):
         self.dashi.fire('log', 'log_debug', msg=msg, handle='core' )
 
     def register(self, data=None):
+        returnvalue = False
         try:
             module = Module.get(Module.name == data['name'])
             module.Activate = True
             module.save()
             self.logmsg("info", "Already registered module {} found, activated module".format(data['name']))
+            allsensors = Sensors.select().where(Sensors.Active == True & Sensors.Module == module)
+            sensorslist = []
+            for sensor in allsensors:
+                queue, key, kwargs = self.getSensor(sensor_id=sensor.id, ident=sensor.ident)
+                sensorslist.append(kwargs)
+            returnvalue = sensorslist
         except DoesNotExist:
             self.logmsg('info', 'Registering {} module'.format(data['name']))
             module = Module()
@@ -75,7 +82,8 @@ class messagehandler(threading.Thread):
                         newarg.RPCargtype = arg['type']
                         newarg.ModuleRPC = newrpc
                         newarg.save()
-        return True
+            returnvalue = True
+        return returnvalue
 
     def addSensor(self, module_id=0, data=None, send=False):
         #add sensor to the database, if send is True, also send it to the module
@@ -98,9 +106,10 @@ class messagehandler(threading.Thread):
             SensorArgs.insert_many(argdata).execute()
         sensargs = SensorArgs.select().where(Sensors.id == sensor.id)
         if send:
-            self.sendSensor(sensor.id, sensor.ident)
+            queue, key, kwargs = self.getSensor(sensor.id, sensor.ident)
+            self.dashi.fire(queue, key, **kwargs)
 
-    def sendSensor(self, sensor_id=0, ident="desc"):
+    def getSensor(self, sensor_id=0, ident="desc"):
         #send sensor definition to the module
         self.logmsg("Debug", "Sensor send function called")
         kwargs = dict()
@@ -116,7 +125,6 @@ class messagehandler(threading.Thread):
             else:
                 return {key: value}
         sensorargs = SensorArgs.select().where(SensorArgs.Sensor == sensor_id)
-        print(sensorargs)
         kwargs = {}
         for sensorarg in sensorargs:
             value = sensorarg.Value
@@ -131,7 +139,7 @@ class messagehandler(threading.Thread):
                                           (ModuleRPC.Module == sendmod.id))
         for key in rpcdata:
             rpckey = key
-        self.dashi.call(queue, rpckey.Key, **kwargs )
+        return queue, rpckey.Key, kwargs
 
     def sensorValue(self, data=None):
         #print(data)
@@ -153,7 +161,8 @@ class messagehandler(threading.Thread):
             self.logmsg('info','Sending all activated sensors')
             allsensors = Sensors.select().join(Module).where(Sensors.Active == True & Module.Active == True)
         for sensor in allsensors:
-            self.sendSensor(sensor.id, sensor.ident)
+            queue, key, kwargs = self.getSensor(sensor.id, sensor.ident)
+            self.dashi.fire(queue, key, **kwargs)
 
     def run(self):
         self.logmsg("info", "starting Dashi consumer")
