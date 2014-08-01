@@ -22,7 +22,6 @@ class rpclogger(Thread):
         Thread.__init__(self)
         self.name = "log"
         dashiconfig = domosSettings.getDashiConfig()
-        print(dashiconfig)
         self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.channels = []
