@@ -81,15 +81,15 @@ class domosTime(Thread):
             if stop:
                 
                 #True job
-                #newjob['start'] = self._sched.add_cron_job(self._jobTrue, args=[key, ident], name=ident, **start)
+                newjob['start'] = self._sched.add_job(self._jobTrue, args=[key, ident], trigger='cron', name=ident, **start)
                 #false job
-                #newjob['stop'] = self._sched.add_cron_job(self._jobFalse, args=[key, ident], name=ident, **stop)
+                newjob['stop'] = self._sched.add_job(self._jobFalse, args=[key, ident], trigger='cron', name=ident, **stop)
                 newjob['ident'] = ident
                 newjob['key'] = key
                 newjob['type'] = jobtype
                 returnvalue = True
             else:
-                #newjob['start'] = self._sched.add_cron_job(self._jobOnce, args=[key, ident], name=ident, **start)
+                newjob['start'] = self._sched.add_job(self._jobOnce, args=[key, ident], trigger='cron', name=ident, **start)
                 newjob['stop'] = None
                 newjob['ident'] = ident
                 newjob['key'] = key
