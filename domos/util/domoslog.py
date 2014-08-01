@@ -2,6 +2,7 @@ import logging as logging
 import json
 from threading import Thread
 import domos.util.domossettings as ds
+from domos.util.domossettings import domosSettings
 from dashi import DashiConnection
 import socket
 import sys
@@ -19,8 +20,10 @@ class rpclogger(Thread):
     def __init__(self):
         self.done = False
         Thread.__init__(self)
-        self.name = ds.LOGNAME
-        self.dashi = DashiConnection(self.name, ds.AMQP_URI, ds.EXCHANGE, sysname = ds.SYSNAME)
+        self.name = "log"
+        dashiconfig = domosSettings.getDashiConfig()
+        print(dashiconfig)
+        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.channels = []
         ch = logging.StreamHandler()

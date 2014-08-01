@@ -17,9 +17,8 @@ class messagehandler(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.done = False
         self.name = 'domoscore'
-        self.dashi = DashiConnection(self.name, ds.AMQP_URI,
-                                     ds.EXCHANGE,
-                                     sysname = ds.SYSNAME)
+        dashiconfig = domosSettings.getDashiConfig()
+        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
         self.logmsg("info", "starting main thread")
         self.dashi.handle(self.register, "register")
         self.dashi.handle(self.sensorValue, "sensorValue")
@@ -48,7 +47,7 @@ class messagehandler(multiprocessing.Process):
 
     def logmsg(self, level, msg):
         call = 'log_{}'.format(level)
-        self.dashi.fire(ds.LOGNAME, 'log_debug', msg=msg, handle='core' )
+        self.dashi.fire('log', 'log_debug', msg=msg, handle='core' )
 
     def register(self, data=None):
         try:
