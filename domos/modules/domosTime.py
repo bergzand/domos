@@ -54,7 +54,7 @@ class domosTime(Process):
         self.done = False
         self.name = 'domosTime'
         self._items = []
-        dashiconfig = domosSettings.getDashiConfig()
+        dashiconfig = ds.domosSettings.getDashiConfig()
         self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
         self._sched = BackgroundScheduler()
         self.logmsg('debug','Initializing scheduler')
@@ -66,7 +66,7 @@ class domosTime(Process):
         
     def logmsg(self, level, msg):
         call = 'log_{}'.format(level)
-        self.dashi.fire(ds.LOGNAME, 'log_debug', msg=msg, handle='DomosTime')
+        self.dashi.fire("log", 'log_debug', msg=msg, handle='DomosTime')
 
 
     def addJob(self, key=None, ident=None, jobtype='Once', start=None, stop=None):
@@ -81,15 +81,15 @@ class domosTime(Process):
             if stop:
                 
                 #True job
-                newjob['start'] = self._sched.add_cron_job(self._jobTrue, args=[key, ident], name=ident, **start)
+                #newjob['start'] = self._sched.add_cron_job(self._jobTrue, args=[key, ident], name=ident, **start)
                 #false job
-                newjob['stop'] = self._sched.add_cron_job(self._jobFalse, args=[key, ident], name=ident, **stop)
+                #newjob['stop'] = self._sched.add_cron_job(self._jobFalse, args=[key, ident], name=ident, **stop)
                 newjob['ident'] = ident
                 newjob['key'] = key
                 newjob['type'] = jobtype
                 returnvalue = True
             else:
-                newjob['start'] = self._sched.add_cron_job(self._jobOnce, args=[key, ident], name=ident, **start)
+                #newjob['start'] = self._sched.add_cron_job(self._jobOnce, args=[key, ident], name=ident, **start)
                 newjob['stop'] = None
                 newjob['ident'] = ident
                 newjob['key'] = key
@@ -99,13 +99,13 @@ class domosTime(Process):
         return returnvalue
 
     def _jobTrue(self, key, ident):
-        self.dashi.fire(ds.CORE, 'sensorValue', data={'key':key, 'ident': ident, 'value': '1'})
+        self.dashi.fire("domoscore", 'sensorValue', data={'key':key, 'ident': ident, 'value': '1'})
 
     def _jobFalse(self, key, ident):
-        self.dashi.fire(ds.CORE, 'sensorValue', data={'key':key, 'ident': ident, 'value': '0'})
+        self.dashi.fire("domoscore", 'sensorValue', data={'key':key, 'ident': ident, 'value': '0'})
 
     def _jobOnce(self, key, ident):
-        self.dashi.fire(ds.CORE, 'sensorValue', data={'key':key, 'ident': ident, 'value': '1'})
+        self.dashi.fire("domoscore", 'sensorValue', data={'key':key, 'ident': ident, 'value': '1'})
     
     def getJobs(self):
         self.logmsg("debug", "All jobs requested")
@@ -131,7 +131,7 @@ class domosTime(Process):
         self.logmsg("debug", "one job deletion requested")
         for job in self._items:
             if job['key'] == key:
-                self._sched.unschedule_job(job['start'])
+                #self._sched.unschedule_job(job['start'])
                 if job['stop']:
                     self._sched.unschedule_job(job['stop'])
                 self._items.remove(job)
@@ -162,7 +162,7 @@ class domosTime(Process):
     
     def run(self):
         self.logmsg("info", "registering with main function")
-        if self.dashi.call(ds.CORE, "register", data=DOMOSTIME_DICT):
+        if self.dashi.call("domoscore", "register", data=DOMOSTIME_DICT):
             self.logmsg("info", "Succesfully registered with core")
         self.logmsg("info", "starting scheduler")
         self._sched.start()

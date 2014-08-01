@@ -5,5 +5,6 @@ import sys
 from threading import Thread
 from domos import domos
 
-dom = domos()
-dom.main()
+if __name__ == "__main__":
+    dom = domos()
+    dom.main()
