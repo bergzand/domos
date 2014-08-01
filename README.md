@@ -5,7 +5,7 @@ The server software for the domos system. Manages sensors, triggers and actions.
 
 
 
-Dependancies
+Dependencies
 ============
 python 3.4.x
 with following packages from pip:
