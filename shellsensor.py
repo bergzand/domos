@@ -8,8 +8,8 @@ SHELLSENSOR_DICT={
     "queue": "shellsensor",
     "rpc": [
         {"key": "addshellinput", "type": "add"},
-        {"key": "outputtoshell", "type": "set", "args":
-        {"name":"value","type":"string"}}]
+        {"key": "outputtoshell", "type": "set", "args":[
+        {"name":"value","type":"string"}]}]
     }
 
 
@@ -43,7 +43,7 @@ class dashiThread(Thread):
         self.identifier = ident;
         self.addaccepted = True;
     
-    def receive(self,key=None,ident=None,value):
+    def receive(self,key=None,ident=None,value=None):
         print("received stuff:",str(value));
         print(">>");
     
