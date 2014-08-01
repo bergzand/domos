@@ -9,3 +9,6 @@
 
 #ignore test database
 test.db
+
+db_config.cfg
+dashiconfig.cfg
