@@ -1,10 +1,10 @@
 from peewee import *
 import datetime
 
+
+
 #db = SqliteDatabase('test.db', threadlocals = True)
-db = MySQLDatabase('domos', user='domos',
-                   host='sql.bergzand.net',
-                   password='ZwFGsHTaqRuac4sj')
+db = MySQLDatabase(None)
 
 rpctypes = ['list', 'get', 'del', 'add']
 

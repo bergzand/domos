@@ -1,5 +1,6 @@
 from dashi import DashiConnection
 import domos.util.domossettings as ds
+from domos.util.domossettings import domosSettings
 from domos.util.domoslog import rpclogger
 from domos.modules.domosTime import domosTime
 import threading
@@ -29,6 +30,7 @@ class messagehandler(multiprocessing.Process):
         self.logmsg("info", "Initializing database")
         
         self.db = db
+        self.db.init("domos",**domosSettings.getDBConfig())
         self.db.connect()
         create_tables()
         init_tables()
