@@ -1,6 +1,8 @@
 #ignore kdevelop files
 *.kdev4
 *.kate-swp
+#swap files (vim)
+*.swp
 #ignore local config files
 *.conf
 #pycache files
