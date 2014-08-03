@@ -19,7 +19,7 @@ class domosSettings:
             dbconfig.read(domosSettings.dbconfigpath)
             if not dbconfig.has_section(domosSettings.dbname):
                 dbconfig.add_section(domosSettings.dbname)
-            with open(domosSettings.dbconfigpath,'w') as file:
+            with open(domosSettings.dbconfigpath, 'w') as file:
                 dbconfig.write(file)
             domosSettings.dbconfig = dict(dbconfig.items(domosSettings.dbname))
         return domosSettings.dbconfig
