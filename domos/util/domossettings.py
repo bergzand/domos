@@ -31,7 +31,7 @@ class domosSettings:
             config.read(domosSettings.configpath)
             if not config.has_section(domosSettings.dashisection):
                 config.add_section(domosSettings.dashisection)
-            with open(domosSettings.configpath,'w') as file:
+            with open(domosSettings.configpath, 'w') as file:
                 config.write(file)
             domosSettings.dashiconfig = dict(config.items(domosSettings.dashisection))
         return domosSettings.dashiconfig
