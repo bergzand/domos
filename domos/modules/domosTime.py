@@ -2,6 +2,7 @@
 
 from threading import Thread
 import domos.util.domossettings as ds
+from domos.util.rpc import rpc
 from dashi import DashiConnection
 import socket
 from multiprocessing import Process
@@ -54,22 +55,21 @@ class domosTime(Thread):
         self.done = False
         self.name = 'domosTime'
         self._items = []
-        dashiconfig = ds.domosSettings.getDashiConfig()
-        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
+        self.rpc = rpc(self.name)
         self._sched = BackgroundScheduler()
-        self.logmsg('debug','Initializing scheduler')
-        self.dashi.handle(self.getJobs, "getTimers")
-        self.dashi.handle(self.getJob, "getTimer")
-        self.dashi.handle(self.addJob, "addTimer")
-        self.dashi.handle(self.delJob, "delTimer")
-        #self.addJob('test', 'test1', 'Toggle', {'second': '10,30,50'}, {'second':'0,20,40'})
-        
+        self.logmsg('debug', 'Initializing scheduler')
+        self.rpc.handle(self.getJobs, "getTimers")
+        self.rpc.handle(self.getJob, "getTimer")
+        self.rpc.handle(self.addJob, "addTimer")
+        self.rpc.handle(self.delJob, "delTimer")
+
     def logmsg(self, level, msg):
         call = 'log_{}'.format(level)
-        self.dashi.fire("log", 'log_debug', msg=msg, handle='DomosTime')
+        self.rpc.fire("log", 'log_debug', msg=msg, handle='DomosTime')
 
-
-    def addJob(self, key=None, ident=None, jobtype='Once', start=None, stop=None):
+    def addJob(self, key=None, 
+               ident=None, jobtype='Once',
+               start=None, stop=None):
         returnvalue = False
         for job in self._items:
             if job['key'] == key:
@@ -79,17 +79,28 @@ class domosTime(Thread):
             #no duplicates found
             newjob = dict()
             if stop:
-                
                 #True job
-                newjob['start'] = self._sched.add_job(self._jobTrue, args=[key, ident], trigger='cron', name=ident, **start)
+                newjob['start'] = self._sched.add_job(self._jobTrue,
+                                                      args=[key, ident],
+                                                      trigger='cron',
+                                                      name=ident,
+                                                      **start)
                 #false job
-                newjob['stop'] = self._sched.add_job(self._jobFalse, args=[key, ident], trigger='cron', name=ident, **stop)
+                newjob['stop'] = self._sched.add_job(self._jobFalse,
+                                                     args=[key, ident],
+                                                     trigger='cron',
+                                                     name=ident,
+                                                     **stop)
                 newjob['ident'] = ident
                 newjob['key'] = key
                 newjob['type'] = jobtype
                 returnvalue = True
             else:
-                newjob['start'] = self._sched.add_job(self._jobOnce, args=[key, ident], trigger='cron', name=ident, **start)
+                newjob['start'] = self._sched.add_job(self._jobOnce,
+                                                      args=[key, ident],
+                                                      trigger='cron',
+                                                      name=ident,
+                                                      **start)
                 newjob['stop'] = None
                 newjob['ident'] = ident
                 newjob['key'] = key
@@ -99,16 +110,22 @@ class domosTime(Thread):
         return returnvalue
 
     def _jobTrue(self, key, ident):
-        self.dashi.fire("domoscore", 'sensorValue', data={'key':key, 'ident': ident, 'value': '1'})
+        self.rpc.fire("domoscore", 'sensorValue', data={'key': key,
+                                                        'ident': ident,
+                                                        'value': '1'})
 
     def _jobFalse(self, key, ident):
-        self.dashi.fire("domoscore", 'sensorValue', data={'key':key, 'ident': ident, 'value': '0'})
+        self.rpc.fire("domoscore", 'sensorValue', data={'key': key,
+                                                        'ident': ident,
+                                                        'value': '0'})
 
     def _jobOnce(self, key, ident):
-        self.dashi.fire("domoscore", 'sensorValue', data={'key':key, 'ident': ident, 'value': '1'})
-    
+        self.rpc.fire("domoscore", 'sensorValue', data={'key': key,
+                                                        'ident': ident,
+                                                        'value': '1'})
+
     def getJobs(self):
-        self.logmsg("debug", "All jobs requested")
+        self.rpc.log_debug("All jobs requested")
         jobs = []
         for job in self._items:
             one = dict()
@@ -126,18 +143,18 @@ class domosTime(Thread):
             one['key'] = job['key']
             jobs.append(one)
         return jobs
-    
+
     def delJob(self, key=None):
-        self.logmsg("debug", "one job deletion requested")
+        self.rpc.log_debug("one job deletion requested")
         for job in self._items:
             if job['key'] == key:
                 #self._sched.unschedule_job(job['start'])
                 if job['stop']:
                     self._sched.unschedule_job(job['stop'])
                 self._items.remove(job)
-                
+
     def getJob(self, key=None, ident=None):
-        self.logmsg("debug", "one job requested")
+        self.rpc.log_debug("one job requested")
         one = None
         for job in self._items:
             if job['key'] == key:
@@ -153,25 +170,18 @@ class domosTime(Thread):
                 one['key'] = job['key']
         return one
 
-    def prerun(self):
-        pass
-
-    def cleanup(self):
-        pass
-        
-    
     def run(self):
-        self.logmsg("info", "registering with main function")
-        if self.dashi.call("domoscore", "register", data=DOMOSTIME_DICT):
-            self.logmsg("info", "Succesfully registered with core")
-        self.logmsg("info", "starting scheduler")
+        self.rpc.log_info("registering with main function")
+        sensors = self.rpc.call("domoscore", "register", data=DOMOSTIME_DICT)
+        if sensors:
+            self.rpc.log_info("Succesfully registered with core")
+            for sensor in sensors:
+                self.addJob(**sensor)
+        self.rpc.log_info("starting scheduler")
         self._sched.start()
-        self.logmsg("info", "starting Dashi consumer")
+        self.rpc.log_info("starting RPC consumer")
         while not self.done:
-            try:
-                self.dashi.consume(timeout=2)
-            except socket.timeout as ex:
-                pass
+            self.rpc.listen()
 
 if __name__ == '__main__':
     dt = domosTime()
