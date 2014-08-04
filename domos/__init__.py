@@ -17,7 +17,7 @@ class messagehandler(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        self.done = False
+        self.shutdown = False
         self.name = 'domoscore'
         self.rpc = rpc(self.name)
         self.rpc.log_info("starting main thread")
@@ -172,15 +172,17 @@ class messagehandler(threading.Thread):
 
     def run(self):
         self.rpc.log_info("starting Dashi consumer")
-        while not self.done:
+        while not self.shutdown:
             self.rpc.listen()
 
     def end(self):
         self.shutdown = True
 
+
 class actionhandler:
     def __init__(self):
         pass
+
 
 class domos:
     def __init__(self):
