@@ -44,6 +44,6 @@ class rpc:
 
     def listen(self, timeout=2):
         try:
-            self.dashi.consume(timeout=2)
+            self.dashi.consume(timeout=timeout)
         except socket.timeout as ex:
             pass
