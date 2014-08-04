@@ -7,6 +7,7 @@ from domos.modules.domosTime import domosTime
 import threading
 import multiprocessing
 import socket
+import peewee
 from time import sleep
 
 from domos.util.db import *
@@ -27,18 +28,26 @@ class messagehandler(threading.Thread):
         self.rpc.handle(self.activateAllSensors, "sendAllSensors")
 
         self.rpc.log_info("Initializing database")
-
-        self.db = db
-        self.db.init("domos", **domosSettings.getDBConfig())
-        self.db.connect()
-        create_tables()
-        init_tables()
-
-        modules = Module.select()
-        for module in modules:
-            module.Active = True
-            module.save()
-        self.rpc.log_info("Done initializing database")
+        db_success = False
+        try:
+            init_dbconn(domosSettings.getDBConfig())
+            self.db = db
+            self.db.connect()
+            db_success = True
+        except peewee.ImproperlyConfigured as err:
+            self.rpc.log_crit("Cannot use database connection: {}".format(err))
+        except peewee.OperationalError as err:
+            self.rpc.log_crit("Database connection error: {}".format(str(err)))
+        if db_success:
+            create_tables()
+            init_tables()
+            modules = Module.select()
+            for module in modules:
+                module.Active = True
+                module.save()
+            self.rpc.log_info("Done initializing database")
+        else:
+            self.shutdown = True
 
     def getSensorValue(self, sensor_id):
         sensor = Sensors.get_by_id(sensor_id)
@@ -110,6 +119,7 @@ class messagehandler(threading.Thread):
         self.rpc.log_debug("Sensor send function called")
         kwargs = dict()
         sensor = Sensors.get_by_id(sensor_id)
+
         def _getdict(kwarg, key, value):
             if len(key.split('.', 1)) > 1:
                 start, end = key.split('.', 1)
@@ -165,6 +175,9 @@ class messagehandler(threading.Thread):
         while not self.done:
             self.rpc.listen()
 
+    def end(self):
+        self.shutdown = True
+
 class actionhandler:
     def __init__(self):
         pass
@@ -177,11 +190,16 @@ class domos:
         logger = rpclogger()
         logger.start()
         msgh = messagehandler()
-        msgh.start()
-        dt = domosTime()
-        dt.start()
-        msgh.rpc.log_info('waiting for modules to register')
-        sleep(1)
+        if msgh.shutdown:
+            logger.log_critical("Initialization error, shutting down", "domoscore")
+            logger.end()
+        else:
+            msgh.start()
+            dt = domosTime()
+            dt.start()
+            msgh.rpc.log_info('waiting for modules to register')
+            sleep(1)
+            msgh.join()
 
         #kwargs = {'key': 'test', 'ident': 'testMain', 'jobtype': 'Toggle', 'start': {'second': '10,30,50'}, 'stop': {'second':'0,20,40'}}
 
@@ -190,5 +208,3 @@ class domos:
         #msgh.rpc.call('domoscore', 'sendAllSensors')
         #print(msgh.dashi.call('domosTime','getTimers'))
         #print(msgh.dashi.call('domoscore','getSensorValue', **{'sensor_id': 1}))
-
-        msgh.join()
