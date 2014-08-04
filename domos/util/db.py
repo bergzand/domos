@@ -1,12 +1,13 @@
+
 from peewee import *
 import datetime
 
 
 
 #db = SqliteDatabase('test.db', threadlocals = True)
-db = MySQLDatabase(None)
+db = Proxy()
 
-rpctypes = ['list', 'get', 'del', 'add']
+rpctypes = ['list', 'get', 'del', 'add', 'set']
 
 
 class BaseModel(Model):
@@ -42,6 +43,7 @@ class RPCArgs(BaseModel):
     Optional = BooleanField(default=False)
 
 
+
 class Sensors(BaseModel):
     Module = ForeignKeyField(Module)
     ident = CharField()
@@ -73,6 +75,14 @@ class SensorArgs(BaseModel):
     RPCArg = ForeignKeyField(RPCArgs)
     Value = CharField()
 
+class Triggers(BaseModel):
+    Name = CharField()
+    
+
+class SensorsForTrigger(BaseModel):
+    Trigger = ForeignKeyField(Triggers)
+    Sensor = ForeignKeyField(Sensors)
+    
 
 class Actions(BaseModel):
     Module = ForeignKeyField(Module)
@@ -80,11 +90,35 @@ class Actions(BaseModel):
 
 
 class ActionArgs(BaseModel):
-    Sensor = ForeignKeyField(Sensors)
-    Arg = CharField()
-    Optional = BooleanField
+    Action = ForeignKeyField(Actions)
+    RPCArg = ForeignKeyField(RPCArgs)
+    Value = CharField()
 
 
+class ActionsForTrigger(BaseModel):
+    Action = ForeignKeyField(Actions)
+    Trigger = ForeignKeyField(Triggers)
+
+
+def init_dbconn(conf):
+    try:
+        driver = conf.pop('driver')
+        database = conf.pop('database')
+    except:
+        pass
+    databaseconn = None
+    if driver == 'mysql':
+        databaseconn = MySQLDatabase(database, **conf)
+    elif driver == 'postgres':
+        databaseconn = PostgresqlDatabase(database, **conf)
+    elif driver == 'sqlite':
+        databaseconn == SqliteDatabase(database, **conf)
+    else:
+        raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
+    if databaseconn:
+        db.initialize(databaseconn)
+    else:
+        raise ImproperlyConfigured("Cannot not initialize database connection")
 
 def create_tables():
     try:
