@@ -103,22 +103,26 @@ class ActionsForTrigger(BaseModel):
 def init_dbconn(conf):
     try:
         driver = conf.pop('driver')
+    except:
+        raise ImproperlyConfigured("No database driver found in config")
+    try:
         database = conf.pop('database')
     except:
-        pass
-    databaseconn = None
-    if driver == 'mysql':
-        databaseconn = MySQLDatabase(database, **conf)
-    elif driver == 'postgres':
-        databaseconn = PostgresqlDatabase(database, **conf)
-    elif driver == 'sqlite':
-        databaseconn == SqliteDatabase(database, **conf)
+        raise ImproperlyConfigured("No database found in config")
     else:
-        raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
-    if databaseconn:
-        db.initialize(databaseconn)
-    else:
-        raise ImproperlyConfigured("Cannot not initialize database connection")
+        databaseconn = None
+        if driver == 'mysql':
+            databaseconn = MySQLDatabase(database, **conf)
+        elif driver == 'postgres':
+            databaseconn = PostgresqlDatabase(database, **conf)
+        elif driver == 'sqlite':
+            databaseconn == SqliteDatabase(database, **conf)
+        else:
+            raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
+        if databaseconn:
+            db.initialize(databaseconn)
+        else:
+            raise ImproperlyConfigured("Cannot not initialize database connection")
 
 def create_tables():
     try:
