@@ -31,13 +31,13 @@ class RPCTypes(BaseModel):
 
 
 class ModuleRPC(BaseModel):
-    Module = ForeignKeyField(Module)
+    Module = ForeignKeyField(Module, on_delete='CASCADE')
     RPCType = ForeignKeyField(RPCTypes)
     Key = CharField()
 
 
 class RPCArgs(BaseModel):
-    ModuleRPC = ForeignKeyField(ModuleRPC)
+    ModuleRPC = ForeignKeyField(ModuleRPC, on_delete='CASCADE')
     name = CharField()
     RPCargtype = CharField()
     Optional = BooleanField(default=False)
@@ -45,7 +45,7 @@ class RPCArgs(BaseModel):
 
 
 class Sensors(BaseModel):
-    Module = ForeignKeyField(Module)
+    Module = ForeignKeyField(Module, on_delete='CASCADE')
     ident = CharField()
     Active = BooleanField(default=True)
     
