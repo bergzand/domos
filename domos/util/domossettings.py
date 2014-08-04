@@ -4,7 +4,7 @@ from configparser import ConfigParser
 class domosSettings:
     dbconfigpath = "db_config.cfg"
     dbname = "domos"
-    dbdefault = dict(user="user", host="localhost", password="password")
+    dbdefault = dict(user="user", host="localhost", password="password", driver="mysql", database="domos")
 
     configpath = "dashiconfig.cfg"
     dashisection = "dashi"
