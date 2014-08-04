@@ -48,21 +48,25 @@ DOMOSTIME_DICT = {
 }
 
 
-class domosTime(Thread):
+class domosTime(Process):
 
     def __init__(self):
-        Thread.__init__(self)
+        Process.__init__(self)
         self.done = False
         self.name = 'domosTime'
         self._items = []
+       
+    def initScheduler(self):
+         self._sched = BackgroundScheduler()
+        
+    def initrpc(self):
         self.rpc = rpc(self.name)
-        self._sched = BackgroundScheduler()
-        self.logmsg('debug', 'Initializing scheduler')
         self.rpc.handle(self.getJobs, "getTimers")
         self.rpc.handle(self.getJob, "getTimer")
         self.rpc.handle(self.addJob, "addTimer")
         self.rpc.handle(self.delJob, "delTimer")
-
+        self.logmsg('debug', 'Initializing scheduler')
+        
     def logmsg(self, level, msg):
         call = 'log_{}'.format(level)
         self.rpc.fire("log", 'log_debug', msg=msg, handle='DomosTime')
@@ -171,6 +175,8 @@ class domosTime(Thread):
         return one
 
     def run(self):
+        self.initrpc()
+        self.initScheduler()
         self.rpc.log_info("registering with main function")
         sensors = self.rpc.call("domoscore", "register", data=DOMOSTIME_DICT)
         if sensors:
