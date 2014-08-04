@@ -1,5 +1,6 @@
 from dashi import DashiConnection
 from threading import Thread
+from domos.util.rpc import rpc
 import socket
 import domos
 
@@ -8,10 +9,10 @@ SHELLSENSOR_DICT={
     "queue": "shellsensor",
     "rpc": [
         {"key": "addshellinput", "type": "add", "args":[
-        {"name":"prompt" ,"type":"string"}]},
+        {"name":"prompt" ,"type":"string","optional":"True"}]},
         {"key": "outputtoshell", "type": "set", "args":[
         {"name":"value","type":"string"},
-        {"name":"prefix" ,"type":"string"}]}]
+        {"name":"prefix" ,"type":"string","optional":"True"}]}]
     }
 
 
@@ -20,51 +21,46 @@ class dashiThread(Thread):
     
     def __init__(self):
         Thread.__init__(self);
+        self.name = "shellsensor"
+        self.rpc = rpc(self.name)        
         self.done = False;
         #Registermessage
-        self.name = "shellsensor"
-        dashiconfig = domos.util.domossettings.domosSettings.getDashiConfig()
-        self.dashi = DashiConnection(self.name,dashiconfig['amqp_uri'],dashiconfig['exchange'],sysname = dashiconfig['sysname'])
-        print("connecting to system:{sys}, exhange: {ex}, as {name}".format(sys=dashiconfig['sysname'], ex=dashiconfig['exchange'], name=self.name))
+        self.rpc.log_info("connecting")
         try:
-            response = self.dashi.call("domoscore","register",data=SHELLSENSOR_DICT)
+            response = self.rpc.call("domoscore","register",data=SHELLSENSOR_DICT)
         except Exception as err:
-            print("Exception: {0}".format(type(err)))
+            self.rpc.log_error("Exception: {0}".format(type(err)))
             self.addaccepted = False
         else:
-            print("response:" + str(response))
-            self.identifier = response[0]["ident"]
-            self.key        = response[0]["key"]
-            self.prompt     = response[0]["prompt"]
-            print("registered as:{id} with key: {key}".format(id=self.identifier,key=self.key))
-            self.dashi.handle(self.listenshell,"addshellinput")
-            self.dashi.handle(self.receive,"outputtoshell")
-            self.addaccepted = True
+            self.rpc.handle(self.addshellinput,"addshellinput")
+            self.rpc.handle(self.receive,"outputtoshell")
+            for sensor in response:
+                self.addshellinput(**sensor)
 
             
         #wait for add
         
     def sendValue(self,value):
         if self.addaccepted:
-            print("sending: "+str(value))
-            self.dashi.fire("domoscore","sensorValue",data={'key':self.key,'ident':self.identifier,'value':value})
+            self.rpc.log_debug("sending: "+str(value))
+            self.rpc.fire("domoscore","sensorValue",data={'key':self.key,'ident':self.identifier,'value':value})
     
-    def listenshell(self,key=None,ident=None):
-        print("received add: key= ",str(key)," ident=",str(ident))
-        self.key = key;
-        self.identifier = ident;
+    def addshellinput(self,key=None,ident=None,prompt=">>"):
+        self.identifier = ident
+        self.key        = key
+        self.prompt     = prompt
+        self.rpc.log_info("registered as:{id} with key: {key}".format(id=self.identifier,key=self.key))
+        print(("registered as:{id} with key: {key}".format(id=self.identifier,key=self.key)))
         self.addaccepted = True;
+        
     
-    def receive(self,key=None,ident=None,value=None,prefix=None):
-        print("received stuff:",str(value));
-        print(str(prefix));
+    def receive(self,key=None,ident=None,value=None,prefix="Received: "):
+        print(prefix+str(value));
+        print(str(self.prompt));
     
     def run(self):
         while not self.done:
-            try:
-                self.dashi.consume(timeout = 2)
-            except socket.timeout as blaaat:
-                pass
+            self.rpc.listen()
     
     def end(self):
         self.done = True;
