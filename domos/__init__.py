@@ -87,7 +87,7 @@ class messagehandler(threading.Thread):
                         newarg.RPCargtype = arg['type']
                         newarg.ModuleRPC = newrpc
                         newarg.save()
-            returnvalue = True
+            returnvalue = []
         return returnvalue
 
     def addSensor(self, module_id=0, data=None, send=False):
