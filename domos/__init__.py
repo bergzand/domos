@@ -61,7 +61,7 @@ class messagehandler(threading.Thread):
             module.Activate = True
             module.save()
             self.rpc.log_info("Already registered module {} found, activated module".format(data['name']))
-            allsensors = Sensors.select().where(Sensors.Active == True & Sensors.Module == module)
+            allsensors = Sensors.select().where((Sensors.Active == True) & (Sensors.Module == module))
             sensorslist = []
             for sensor in allsensors:
                 queue, key, kwargs = self.getSensor(sensor_id=sensor.id, ident=sensor.ident)
