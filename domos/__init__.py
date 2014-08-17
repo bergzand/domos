@@ -50,6 +50,7 @@ class messagehandler(threading.Thread):
         returnvalue = False
         try:
             module = self.db.getModule(data['name'])
+            print(module.__dict__)
         except DoesNotExist:
             module = self.db.addModule(self, data['name'], data['queue'])
             for rpc in data['rpc']:
@@ -83,6 +84,9 @@ class messagehandler(threading.Thread):
             self.db.addValue(data['key'], data['value'])
         except Exception as e:
             self.rpc.log_warn('Something went wrong registering trigger value for {0}: {1}'.format(data['ident'], e))
+
+    def addTrigger(self):
+        pass
 
     def run(self):
         self.rpc.log_info("starting Dashi consumer")
