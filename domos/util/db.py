@@ -2,8 +2,6 @@
 from peewee import *
 import datetime
 
-
-
 #db = SqliteDatabase('test.db', threadlocals = True)
 dbconn = Proxy()
 
@@ -77,17 +75,17 @@ class SensorArgs(BaseModel):
 
 class Triggers(BaseModel):
     Name = CharField()
-    
+    Trigger = TextField()
 
-class SensorsForTrigger(BaseModel):
+class Functions(BaseModel):
     Trigger = ForeignKeyField(Triggers)
     Sensor = ForeignKeyField(Sensors)
-    
+    Function = CharField()
+    Args = CharField()
 
 class Actions(BaseModel):
     Module = ForeignKeyField(Module)
     ident = CharField()
-
 
 class ActionArgs(BaseModel):
     Action = ForeignKeyField(Actions)
@@ -96,6 +94,7 @@ class ActionArgs(BaseModel):
 
 
 class ActionsForTrigger(BaseModel):
+    #mapping of triggers and actions
     Action = ForeignKeyField(Actions)
     Trigger = ForeignKeyField(Triggers)
 
@@ -137,6 +136,7 @@ class dbhandler:
             SensorArgs.create_table()
             Actions.create_table()
             ActionArgs.create_table()
+            ActionsForTrigger.create_table()
         except InternalError:
             pass
 
@@ -285,3 +285,19 @@ class dbhandler:
 
     def addValue(self, sensor_id, value):
         value = SensorValues.create(Sensor=sensor_id, Value=str(value))
+
+    def addTrigger(self, name, trigger, sensorlist, descr=None):
+        '''
+            trigger string examples:
+            "_sens0.last() == True"
+        '''
+        trigger = Triggers.create(Name=name, Trigger=trigger)
+
+    def parseTrigger(self, trigger):
+        pass
+        
+    def checkSensorTriggers(self, sensor):
+        sensortriggers = Triggers.Select().Join(Functions).Where(Functions.Sensor == sensor)
+        for sensortrigger in sensortriggers:
+            pass
+            #check this sensor on true
