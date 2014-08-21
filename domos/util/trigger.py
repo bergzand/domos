@@ -111,7 +111,7 @@ class Calc(STransformer):
     def transform(self, tree, sensvars=None, trigvars=None):
         self.sensvars = sensvars
         self.trigvars = trigvars
-        return str(STransformer.transform(self, tree))
+        return str(float(STransformer.transform(self, tree)))
     
     def _bin_operator(self, exp):
         arg1, operator_symbol, arg2 = exp.tail
