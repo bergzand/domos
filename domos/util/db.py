@@ -24,6 +24,7 @@ class Module(BaseModel):
     queue = CharField()
     Active = BooleanField()
 
+
 class RPCTypes(BaseModel):
     rpctype = CharField()
 
@@ -41,16 +42,19 @@ class RPCArgs(BaseModel):
     Optional = BooleanField(default=False)
 
 
-
 class Sensors(BaseModel):
     Module = ForeignKeyField(Module, on_delete='CASCADE')
     ident = CharField()
     Active = BooleanField(default=True)
+    Instant = BooleanField(default=False)
     
-    def last(self, num=1):
+    def last(self, num=1, instantvalue=0):
         #returns the last - num value from the database
-        selection = SensorValues.select().where(Sensors.id == self.id)
-        return selection.limit(num).offset(num).dicts().get()
+        if self.Instant:
+            return {'Sensor': self.id, 'Value': 0,}
+        else:
+            selection = SensorValues.select().where(SensorValues.Sensor == self.id).order_by(SensorValues.Timestamp.desc()).limit(num)
+            return selection.offset(num).dicts().get()
 
     def avg(self, num):
         #returns the average of the last num values
@@ -73,19 +77,46 @@ class SensorArgs(BaseModel):
     RPCArg = ForeignKeyField(RPCArgs)
     Value = CharField()
 
+
 class Triggers(BaseModel):
     Name = CharField()
     Trigger = TextField()
+    Record = BooleanField()
+    Lastvalue = CharField(null=True, default="null")
+    
+    def last(self, num=1):
+        if self.Lastvalue:
+            return self.Lastvalue
+        else:
+            return '0'
 
-class Functions(BaseModel):
+class TriggerValues(BaseModel):
+    Trigger = ForeignKeyField(Triggers, on_delete='CASCADE')
+    Value = CharField()
+    Timestamp = DateTimeField(default=datetime.datetime.now)
+    descr = None
+
+    class meta:
+        order_by = ('-Timestamp',)
+
+
+class SensorFunctions(BaseModel):
     Trigger = ForeignKeyField(Triggers)
     Sensor = ForeignKeyField(Sensors)
+    Function = CharField()
+    Args = CharField()
+
+
+class TriggerFunctions(BaseModel):
+    Trigger = ForeignKeyField(Triggers, related_name='Used by')         #trigger that
+    UsedTrigger = ForeignKeyField(Triggers, related_name='using')      #uses these triggers in its function
     Function = CharField()
     Args = CharField()
 
 class Actions(BaseModel):
     Module = ForeignKeyField(Module)
     ident = CharField()
+
 
 class ActionArgs(BaseModel):
     Action = ForeignKeyField(Actions)
@@ -97,48 +128,57 @@ class ActionsForTrigger(BaseModel):
     #mapping of triggers and actions
     Action = ForeignKeyField(Actions)
     Trigger = ForeignKeyField(Triggers)
-
+    Match = CharField(null=True)
 
 class dbhandler:
-    def __init__(self, conf):
+    def __init__(self, conf=None):
         self.connected = False
-        try:
-            driver = conf.pop('driver')
-        except:
-            raise ImproperlyConfigured("No database driver found in config")
-        try:
-            database = conf.pop('database')
-        except:
-            raise ImproperlyConfigured("No database found in config")
-        else:
-            databaseconn = None
-            if driver == 'mysql':
-                databaseconn = MySQLDatabase(database, **conf)
-            elif driver == 'postgres':
-                databaseconn = PostgresqlDatabase(database, **conf)
-            elif driver == 'sqlite':
-                databaseconn == SqliteDatabase(database, **conf)
+        if conf:
+            try:
+                driver = conf.pop('driver')
+            except:
+                raise ImproperlyConfigured("No database driver found in config")
+            try:
+                database = conf.pop('database')
+            except:
+                raise ImproperlyConfigured("No database found in config")
             else:
-                raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
-            if databaseconn:
-                dbconn.initialize(databaseconn)
-            else:
-                raise ImproperlyConfigured("Cannot not initialize database connection")
+                databaseconn = None
+                if driver == 'mysql':
+                    databaseconn = MySQLDatabase(database, **conf)
+                elif driver == 'postgres':
+                    databaseconn = PostgresqlDatabase(database, **conf)
+                elif driver == 'sqlite':
+                    databaseconn == SqliteDatabase(database, **conf)
+                else:
+                    raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
+                if databaseconn:
+                    dbconn.initialize(databaseconn)
+                else:
+                    raise ImproperlyConfigured("Cannot not initialize database connection")
 
     def create_tables(self):
-        try:
-            Module.create_table()
-            RPCTypes.create_table()
-            ModuleRPC.create_table()
-            RPCArgs.create_table()
-            Sensors.create_table()
-            SensorValues.create_table()
-            SensorArgs.create_table()
-            Actions.create_table()
-            ActionArgs.create_table()
-            ActionsForTrigger.create_table()
-        except InternalError:
-            pass
+        tables = [Module,
+                  RPCTypes,
+                  ModuleRPC,
+                  RPCArgs,
+                  Sensors,
+                  SensorValues,
+                  SensorArgs,
+                  Actions,
+                  Triggers,
+                  TriggerValues,
+                  SensorFunctions,
+                  TriggerFunctions,
+                  ActionsForTrigger,
+                  ActionArgs]
+
+        for table in tables:
+            try:
+                table.create_table()
+                print("created table:", table)
+            except InternalError:
+                pass
 
     def init_tables(self):
         for type in rpctypes:
@@ -286,16 +326,34 @@ class dbhandler:
     def addValue(self, sensor_id, value):
         value = SensorValues.create(Sensor=sensor_id, Value=str(value))
 
+    def gettriggersfromsensor(self, sensor_id):
+        funcs = SensorFunctions.select(SensorFunctions, Triggers).join(Triggers).where(SensorFunctions.Sensor == sensor_id)
+        return [sensorfunc.Trigger for sensorfunc in funcs]
+    
+    def getsensorfunctions(self, trigger_id):
+        return SensorFunctions.select(SensorFunctions, Sensors).join(Sensors).where(SensorFunctions.Trigger == trigger_id)
+    
+    def gettriggerfunctions(self, trigger_id):
+        return TriggerFunctions.select().where(TriggerFunctions.Trigger == trigger_id)
+    
+    def gettriggersfromtrigger(self, trigger_id):
+        funcs = TriggerFunctions.select(TriggerFunctions, Triggers).join(Triggers).where((TriggerFunctions.UsedTrigger == trigger_id) 
+                                                                                         & (TriggerFunctions.Trigger != trigger_id))
+        return [triggerfunc.Trigger for triggerfunc in funcs]
+    
     def addTrigger(self, name, trigger, sensorlist, descr=None):
         '''
             trigger string examples:
-            "_sens0.last() == True"
+            "__sens0__ == True"
         '''
         trigger = Triggers.create(Name=name, Trigger=trigger)
-
-    def parseTrigger(self, trigger):
-        pass
-        
+    
+    def addTriggervalue(self, trigger, value):
+        trigger.Lastvalue = value
+        trigger.save()
+        if trigger.Record:
+            value = TriggerValues.create(Trigger=trigger, Value=value)
+    
     def checkSensorTriggers(self, sensor):
         sensortriggers = Triggers.Select().Join(Functions).Where(Functions.Sensor == sensor)
         for sensortrigger in sensortriggers:
