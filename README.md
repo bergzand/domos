@@ -13,7 +13,7 @@ with following packages from pip:
  *  AP Scheduler
  *  PyMysql
  *  peewee
- 
+ *  plyplus 
  
 and dashi for python 3
 https://github.com/bergzand/python3-dashi
