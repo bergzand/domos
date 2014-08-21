@@ -1,85 +1,38 @@
 #!/usr/bin/env python3
 import operator as op
+from domos.util.trigger import *
 from plyplus import Grammar, STransformer
 import unittest
 
-GRAMMAR = """
-    start: lgc;             // This is the top of the hierarchy
-    ?lgc: ( lgc lgc_symbol )? eql;
-    ?eql: ( eql eql_symbol )? add;
-    ?add: ( add add_symbol )? mul;
-    ?mul: ( mul mul_symbol )? exp;
-    ?exp: ( exp exp_symbol )? atom;
-    @atom: neg | number | sensor | true_symbol | false_symbol | '\(' add '\)';
-    neg: '-' atom;
-    true_symbol: 'True' | 'true' | 'Yes' | 'yes';
-    false_symbol: 'False' | 'false' | 'No' | 'no';
-    number: '[\d.]+';       // Regular expression for a decimal number
-    sensor: '{[\w.\(\)]+}';   // Sensor Macro match
-    mul_symbol: '\*' | '/' | '%'; // Match * or / or %
-    add_symbol: '\+' | '-'; // Match + or -
-    exp_symbol: '\*\*';
-    eql_symbol: '==' | '<=' | '!=' | '>=' |'<' | '>';
-    bit_symbol: '\|' | '\&' | '\^';
-    lgc_symbol: '\|\|' | '\&\&';
-    WHITESPACE: '[ \t]+' (%ignore);
-"""
-
 TESTS = [
-    ('2**4*3+5', 53),   # Order of operation test
-    ('2*(3+5)', 16),    # Order of operation test
-    ('5 >= 5', True),
-    ('True && False', False),
-    ('2 && 6', True),
-    ('2 || False', True),
+    ('2**4*3+5', '53.0'),           # Order of operation test
+    ('2*(3+5)', '16.0'),            # Order of operation test
+    ('13//4', '3.0'),               # floordiv test
+    ('5 >= 5', '1.0'),           # inequality test
+    ('True && False', '0.0'),
+    ('2 && 6', '1.0'),
+    ('2 || False', '1.0'),
+    ('3 == 5', '0.0'),
+    ('__sens3532__', '3.0'),
+    ('__trig23__', '2.0'),
     ]
-class Calc(STransformer):
-
-    def _bin_operator(self, exp):
-        print(exp.tail)
-        arg1, operator_symbol, arg2 = exp.tail
-
-        operator_func = { '+': op.add,
-                          '-': op.sub,
-                          '*': op.mul,
-                          '/': op.truediv,
-                          '%': op.mod,
-                          '**': op.pow,
-                          '==': op.eq,
-                          '!=': op.ne,
-                          '<=': op.le,
-                          '>=': op.ge,
-                          '<' : op.lt,
-                          '>' : op.gt,
-                          '||': lambda arg1, arg2: op.truth(arg1) or op.truth(arg2),
-                          '&&': lambda arg1, arg2: op.truth(arg1) and op.truth(arg2)}[operator_symbol]
-
-        return operator_func(arg1, arg2)
-
-    number      = lambda self, exp: float(exp.tail[0])
-    true_symbol = lambda self, exp: True
-    false_symbol = lambda self, exp: False
-    neg         = lambda self, exp: op.neg(exp.tail[0])
-    __default__ = lambda self, exp: exp.tail[0]
-    sensor      = lambda self, exp: float(2)
-    
-    
-    add = _bin_operator
-    mul = _bin_operator
-    exp = _bin_operator
-    eql = _bin_operator
-    lgc = _bin_operator
 
 class ParserTest(unittest.TestCase):
     
     def setUp(self):
-        self.g = Grammar(GRAMMAR)
+        self.g = Grammar(triggerChecker.GRAMMAR)
+        self.sensorvars = {"3532": 3}
+        self.triggervars = {"23": 2}
     
     def test_grammar(self):
         for rule, expect in TESTS:
             with self.subTest(i=rule):
-                result = Calc().transform(self.g.parse(rule))
+                print("Parsing: \"", rule, "\"", sep='')
+                tree = self.g.parse(rule)
+                print(tree.pretty())
+                result = Calc().transform(tree, sensvars=self.sensorvars, trigvars=self.triggervars)
+                print("result:", result)
                 self.assertEqual(result, expect)
 
-if __name__ == '__main__':
+def parsertest():
     unittest.main()
