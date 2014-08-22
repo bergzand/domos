@@ -9,33 +9,37 @@ import peewee
 import pprint
 
 
+GRAMMAR = """
+    start: lgc;             // This is the top of the hierarchy
+    ?lgc: ( lgc lgc_symbol )? eql;
+    ?eql: ( eql eql_symbol )? add;
+    ?add: ( add add_symbol )? mul;
+    ?mul: ( mul mul_symbol )? exp;
+    ?exp: ( exp exp_symbol )? atom;
+    @atom: neg | number | string | sensor | trigger | true_symbol | false_symbol | '\(' add '\)';
+    neg: '-' atom;
+    true_symbol: 'True' | 'true' | 'Yes' | 'yes';
+    false_symbol: 'False' | 'false' | 'No' | 'no';
+    string: '[\"]\w+[\"]';
+    number: '[\d.]+';       // Regular expression for a decimal number
+    sensor: '__sens\d+__';   // Sensor db macro match
+    trigger: '__trig\d+__'; //trigger db macro match
+    mul_symbol: '\*' | '/' | '//' | '%'; // Match * or / or %
+    add_symbol: '\+' | '-'; // Match + or -
+    exp_symbol: '\*\*';
+    eql_symbol: '==' | '<=' | '!=' | '>=' |'<' | '>';
+    lgc_symbol: '\|\|' | '\&\&';
+    bit_symbol: '\|' | '\&' | '\^';
+    WHITESPACE: '[ \t]+' (%ignore);
+"""
+    
 class triggerChecker(threading.Thread):
     
-    GRAMMAR = """
-        start: lgc;             // This is the top of the hierarchy
-        ?lgc: ( lgc lgc_symbol )? eql;
-        ?eql: ( eql eql_symbol )? add;
-        ?add: ( add add_symbol )? mul;
-        ?mul: ( mul mul_symbol )? exp;
-        ?exp: ( exp exp_symbol )? atom;
-        @atom: neg | number | sensor | trigger | true_symbol | false_symbol | '\(' add '\)';
-        neg: '-' atom;
-        true_symbol: 'True' | 'true' | 'Yes' | 'yes';
-        false_symbol: 'False' | 'false' | 'No' | 'no';
-        number: '[\d.]+';       // Regular expression for a decimal number
-        sensor: '__sens\d+__';   // Sensor db macro match
-        trigger: '__trig\d+__'; //trigger db macro match
-        mul_symbol: '\*' | '/' | '//' | '%'; // Match * or / or %
-        add_symbol: '\+' | '-'; // Match + or -
-        exp_symbol: '\*\*';
-        eql_symbol: '==' | '<=' | '!=' | '>=' |'<' | '>';
-        lgc_symbol: '\|\|' | '\&\&';
-        bit_symbol: '\|' | '\&' | '\^';
-        WHITESPACE: '[ \t]+' (%ignore);
-    """
+
 
     def __init__(self, queue=None, logger=None):
         threading.Thread.__init__(self)
+        self.actionqueue = None
         self.shutdown = False
         if logger:
             self.logger = logger
@@ -46,7 +50,7 @@ class triggerChecker(threading.Thread):
             self.logger.log_error = lambda self, msg: None
             self.logger.log_crit = lambda self, msg: None
         self.logger.log_debug("Initializing trigger checker thread")
-        self.grammar = Grammar(triggerChecker.GRAMMAR)
+        self.grammar = Grammar(GRAMMAR)
         if not queue:
             self.q = qu.Queue()
         else:
@@ -62,20 +66,43 @@ class triggerChecker(threading.Thread):
     def getqueue(self):
         return self.q
 
+    def setactionqueue(self, queue):
+        self.actionqueue = queue
+        
     def _checktrigger(self, trigger, item):
-        print(item)
         type, id, value = item
         sensorfuncs = self.db.getsensorfunctions(trigger)
         sensorvars = {}
         for func in sensorfuncs:
             if func.Sensor.id == id:
+                str(value)
+                try:
+                    value = float(value)
+                except:
+                    print("could not convert", value)
                 sensorvars[str(func.id)] = value
             else:
-                sensorvars[str(func.id)] = func.Sensor.last()['Value']
-        triggerfuncs = self.db.gettriggerfunctions(trigger)
+                dictval = func.Sensor.last()['Value']
+                try:
+                    dictval = float(dictval)
+                except:
+                    pass
+                sensorvars[str(func.id)] = dictval 
+        triggerfuncs = [func for func in self.db.gettriggerfunctions(trigger)]
+        
         #TODO: add function dict
-
-        triggervars = {str(func.id): func.UsedTrigger.last() for func in triggerfuncs}
+        def _convtriggervar(trigger):
+            value = trigger.last()
+            try:
+                value = float(value)
+            except:
+                pass
+            print(value)
+            return value
+        triggervars = {str(func.id):
+                           _convtriggervar(func.UsedTrigger)
+                                for func in triggerfuncs}
+        print(triggervars)
         tree = self.grammar.parse(trigger.Trigger)
         print(tree.pretty())
         triggervalue = Calc().transform(tree, sensvars=sensorvars, trigvars=triggervars)
@@ -84,6 +111,8 @@ class triggerChecker(threading.Thread):
             self.logger.log_debug("Trigger {0} now has value {1}".format(trigger.id, triggervalue))
             self.db.addTriggervalue(trigger, triggervalue)
             self.q.put(("trigger", trigger.id, triggervalue))
+            if self.actionqueue:
+                self.actionqueue.put(("trigger", trigger.id, triggervalue))
 
     def processitem(self, item):
         type, id, value = item
@@ -101,11 +130,78 @@ class triggerChecker(threading.Thread):
         while not self.shutdown:
             try:
                 item = self.q.get(timeout=2)
-                print("found item")
                 self.processitem(item)
             except qu.Empty:
                 pass
 
+
+class actionhandler(threading.Thread):
+
+    def __init__(self, rpc, queue=None, logger=None):
+        threading.Thread.__init__(self)
+        self.shutdown = False
+        if logger:
+            self.logger = logger
+        else:
+            self.logger.log_debug = lambda self, msg: None
+            self.logger.log_info = lambda self, msg: None
+            self.logger.log_warn = lambda self, msg: None
+            self.logger.log_error = lambda self, msg: None
+            self.logger.log_crit = lambda self, msg: None
+        self.logger.log_debug("Initializing action checker thread")
+        self.grammar = Grammar(GRAMMAR)
+        self.rpc = rpc
+        if not queue:
+            self.q = qu.Queue()
+        else:
+            self.q = queue
+        try:
+            self.db = dbhandler()
+            self.db.connect()
+
+        except:
+            self.logger.log_crit("Could not connect to database, shutting down")
+            self.shutdown = True
+
+    def getqueue(self):
+        return self.q
+        
+    def _callaction(self, action):
+        actionargs = self.db.getActionDict(action)
+        print(actionargs)
+        module = action.Module
+        self.rpc.fire(module.queue,
+                      self.db.getRPCCall(module, 'set').Key,
+                      **actionargs)
+
+    def processitem(self, item):
+        #get all actions attached
+        type, trigger, value = item
+        actions = self.db.getActionsfromtrigger(trigger)
+        self.logger.log_debug("Found {} action with trigger".format(len(actions)))
+        for action in actions:
+            #check if action is activated
+            tree = self.grammar.parse(action.Match)
+            print(tree.pretty())
+            #TODO: supply variables for transform
+            active = Calc().transform(tree)
+            try:
+                active = float(active)
+            except:
+                self.logger.log_debug("Parsing action activation condition as string")
+            if active:
+                self.logger.log_info("Calling action {}".format(action.Action.ident))
+                self._callaction(action.Action)
+                
+
+    def run(self):
+        while not self.shutdown:
+            try:
+                item = self.q.get(timeout=2)
+                print("found trigger")
+                self.processitem(item)
+            except qu.Empty:
+                pass
 
 class Calc(STransformer):
     def transform(self, tree, sensvars=None, trigvars=None):
@@ -115,7 +211,7 @@ class Calc(STransformer):
     
     def _bin_operator(self, exp):
         arg1, operator_symbol, arg2 = exp.tail
-
+        print(exp.tail)
         operator_func = { '+': op.add,
                           '-': op.sub,
                           '*': op.mul,
@@ -136,11 +232,11 @@ class Calc(STransformer):
 
     def _sens_operator(self, exp):
         sensorid = exp.tail[0][6:-2]
-        return float(self.sensvars.get(sensorid,0))
+        return self.sensvars.get(sensorid,0)
 
     def _trig_operator(self, exp):
         triggerid = exp.tail[0][6:-2]
-        return float(self.trigvars.get(triggerid,0))
+        return self.trigvars.get(triggerid,0)
     
     number      = lambda self, exp: float(exp.tail[0])
     true_symbol = lambda self, exp: float(1)
@@ -149,7 +245,7 @@ class Calc(STransformer):
     __default__ = lambda self, exp: exp.tail[0]
     sensor      = _sens_operator
     trigger     = _trig_operator
-    
+    string      = lambda self, exp: str(exp.tail[0][1:-1])
     
     add = _bin_operator
     mul = _bin_operator

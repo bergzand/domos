@@ -13,12 +13,14 @@ TESTS = [
     ('3 == 5', '0.0'),
     ('__sens3532__', '3.0'),
     ('__trig23__', '2.0'),
+    ('"test" == "test"', '1.0'), #string test
+    ('"5" == 5', '0.0')
     ]
 
 class ParserTest(unittest.TestCase):
     
     def setUp(self):
-        self.g = Grammar(triggerChecker.GRAMMAR)
+        self.g = Grammar(GRAMMAR)
         self.sensorvars = {"3532": 3}
         self.triggervars = {"23": 2}
     
