@@ -217,14 +217,13 @@ class dbhandler:
         rpcrecord = RPCTypes.get(RPCTypes.rpctype == rpctype)
         with dbconn.transaction():
             newrpc = ModuleRPC.create(Module=module, Key=key, RPCType=rpcrecord)
-            argdict = []
-            for name, rpctype, opt, decr in args:
-                argdict.append({'name':name,
-                                'RPCargtype': rpctype,
-                                'Optional':opt,
-                                'descr': descr,
-                                'ModuleRPC': newrpc})
-            RPCArgs.insert_many(argdict).execute()
+            if args:
+                argdict = [{'name':name,
+                            'RPCargtype': rpctype,
+                            'Optional':opt,
+                            'descr': descr,
+                            'ModuleRPC': newrpc}for name, rpctype, opt, decr in args]
+                RPCArgs.insert_many(argdict).execute()
 
     def _checkArg(self, oldArg, newArg):
         if oldArg == NewArg:
@@ -308,8 +307,10 @@ class dbhandler:
         return sensor
 
     def getModuleSensors(self, module):
-        sensors = Sensors.select().join(SensorArgs).join(RPCArgs).where(Sensors.Module == module)
-        return [self.getSensorDict(sensor) for sensor in sensors]
+        sensors = Sensors.select().where(Sensors.Module == module)
+        sensorlist = [self.getSensorDict(sensor) for sensor in sensors]
+        print(sensorlist)
+        return sensorlist
 
     def getSensorDict(self, sensor):
         kwargs = dict()
