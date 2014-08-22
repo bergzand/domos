@@ -4,7 +4,7 @@ from domos.util.domossettings import domosSettings
 from domos.util.domoslog import rpclogger
 from domos.util.rpc import rpc
 from domos.modules.domosTime import domosTime
-from domos.util.trigger import triggerChecker
+from domos.util.trigger import *
 import threading
 import multiprocessing
 import socket
@@ -40,9 +40,13 @@ class messagehandler(threading.Thread):
             self.db.create_tables()
             self.db.init_tables()
             self.rpc.log_info("Done initializing database")
-            triggerchecker = triggerChecker(logger=self.rpc)
-            self.triggerqueue = triggerchecker.getqueue()
-            triggerchecker.start()
+            self.triggerchecker = triggerChecker(logger=self.rpc)
+            self.triggerqueue = self.triggerchecker.getqueue()
+            self.triggerchecker.start()
+            self.actionhandler = actionhandler(self.rpc, logger=self.rpc)
+            self.actionqueue = self.actionhandler.getqueue()
+            self.triggerchecker.setactionqueue(self.actionqueue)
+            self.actionhandler.start()
         else:
             self.shutdown = True
         
@@ -108,12 +112,6 @@ class messagehandler(threading.Thread):
 
     def end(self):
         self.shutdown = True
-
-
-class actionhandler:
-    def __init__(self):
-        pass
-
 
 class domos:
     def __init__(self):
