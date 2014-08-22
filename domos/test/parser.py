@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-import operator as op
 from domos.util.trigger import *
-from plyplus import Grammar, STransformer
 import unittest
 
 TESTS = [
