@@ -145,11 +145,11 @@ class dbhandler:
             else:
                 databaseconn = None
                 if driver == 'mysql':
-                    databaseconn = MySQLDatabase(database, **conf)
+                    databaseconn = MySQLDatabase(database, threadlocals=True, **conf)
                 elif driver == 'postgres':
-                    databaseconn = PostgresqlDatabase(database, **conf)
+                    databaseconn = PostgresqlDatabase(database, threadlocals=True, **conf)
                 elif driver == 'sqlite':
-                    databaseconn == SqliteDatabase(database, **conf)
+                    databaseconn == SqliteDatabase(database, threadlocals=True, **conf)
                 else:
                     raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
                 if databaseconn:
@@ -323,6 +323,17 @@ class dbhandler:
         kwargs['key'] = sensor.id
         kwargs['ident'] = sensor.ident
         return kwargs
+    
+    def getActionDict(self, action):
+        actionargs = ActionArgs.select(ActionArgs, RPCArgs).join(RPCArgs).where(ActionArgs.Action == action)
+        kwargs = {}
+        for actionarg in actionargs:
+            value = actionarg.Value
+            rpcarg = actionarg.RPCArg
+            kwargs = self._getdict(kwargs, rpcarg.name, value)
+        kwargs['key'] = action.id
+        kwargs['ident'] = action.ident
+        return kwargs
 
     def addValue(self, sensor_id, value):
         value = SensorValues.create(Sensor=sensor_id, Value=str(value))
@@ -360,3 +371,8 @@ class dbhandler:
         for sensortrigger in sensortriggers:
             pass
             #check this sensor on true
+
+    def getActionsfromtrigger(self, trigger_id):
+        actions = ActionsForTrigger.select(ActionsForTrigger, Actions).join(Actions).where(ActionsForTrigger.Trigger == trigger_id)
+        return [action for action in actions]
+        
