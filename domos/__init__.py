@@ -10,7 +10,7 @@ import multiprocessing
 import socket
 import peewee
 from time import sleep
-
+import pprint
 from domos.util.db import *
 
 
@@ -55,16 +55,20 @@ class messagehandler(threading.Thread):
         returnvalue = False
         try:
             module = self.db.getModule(data['name'])
-            print(module.__dict__)
         except DoesNotExist:
-            module = self.db.addModule(self, data['name'], data['queue'])
+            module = self.db.addModule(name=data['name'], queue=data['queue'])
             for rpc in data['rpc']:
-                argslist = [(arg['name'],
-                             arg['type'],
-                             arg.get('optional', False),
-                             arg.get('descr', None)) for arg in data['args']]
-                self.db.addRPC(module, rpc['name'], rpc['type'], argslist)
+                argslist = []
+                if "args" in rpc:
+                    
+                    argslist = [(arg['name'],
+                                arg['type'],
+                                arg.get('optional', False),
+                                arg.get('descr', None)) for arg in rpc['args']]
+                    pprint.pprint(argslist)
+                self.db.addRPC(module, rpc['key'], rpc['type'], argslist)
         else:
+            self.rpc.log_debug("Sending sensors to module")
             return self.db.getModuleSensors(module)
 
     def addSensor(self, module_id=0, data=None, send=False):
