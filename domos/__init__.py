@@ -69,7 +69,6 @@ class messagehandler(threading.Thread):
                                 arg['type'],
                                 arg.get('optional', False),
                                 arg.get('descr', None)) for arg in rpc['args']]
-                    pprint.pprint(argslist)
                 self.db.addRPC(module, rpc['key'], rpc['type'], argslist)
         else:
             self.rpc.log_debug("Sending sensors to module")
