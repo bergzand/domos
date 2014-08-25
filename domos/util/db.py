@@ -2,7 +2,6 @@
 from peewee import *
 import datetime
 
-#db = SqliteDatabase('test.db', threadlocals = True)
 dbconn = Proxy()
 
 rpctypes = ['list', 'get', 'del', 'add', 'set']
@@ -78,9 +77,19 @@ class SensorArgs(BaseModel):
     Value = CharField()
 
 
+class Macros(BaseModel):
+    Name = CharField()
+    Value = CharField()
+
+
+class Match(BaseModel):
+    descr = None
+    Matchstring = CharField()
+    Pickled = BlobField(null=True)
+
 class Triggers(BaseModel):
     Name = CharField()
-    Trigger = TextField()
+    Match = ForeignKeyField(Match)
     Record = BooleanField()
     Lastvalue = CharField(null=True, default="null")
     
@@ -101,17 +110,18 @@ class TriggerValues(BaseModel):
 
 
 class SensorFunctions(BaseModel):
-    Trigger = ForeignKeyField(Triggers)
     Sensor = ForeignKeyField(Sensors)
+    Match = ForeignKeyField(Match)
     Function = CharField()
     Args = CharField()
 
 
 class TriggerFunctions(BaseModel):
-    Trigger = ForeignKeyField(Triggers, related_name='Used by')         #trigger that
-    UsedTrigger = ForeignKeyField(Triggers, related_name='using')      #uses these triggers in its function
+    Trigger = ForeignKeyField(Triggers)
+    Match = ForeignKeyField(Match)
     Function = CharField()
     Args = CharField()
+
 
 class Actions(BaseModel):
     Module = ForeignKeyField(Module)
@@ -121,14 +131,15 @@ class Actions(BaseModel):
 class ActionArgs(BaseModel):
     Action = ForeignKeyField(Actions)
     RPCArg = ForeignKeyField(RPCArgs)
-    Value = CharField()
+    Value = ForeignKeyField(Match)
 
 
 class ActionsForTrigger(BaseModel):
     #mapping of triggers and actions
     Action = ForeignKeyField(Actions)
     Trigger = ForeignKeyField(Triggers)
-    Match = CharField(null=True)
+    Match = ForeignKeyField(Match)
+
 
 class dbhandler:
     def __init__(self, conf=None):
@@ -162,6 +173,7 @@ class dbhandler:
                   RPCTypes,
                   ModuleRPC,
                   RPCArgs,
+                  Match,
                   Sensors,
                   SensorValues,
                   SensorArgs,
@@ -323,36 +335,39 @@ class dbhandler:
         kwargs['key'] = sensor.id
         kwargs['ident'] = sensor.ident
         return kwargs
-    
+
     def getActionDict(self, action):
         actionargs = ActionArgs.select(ActionArgs, RPCArgs).join(RPCArgs).where(ActionArgs.Action == action)
-        kwargs = {}
-        for actionarg in actionargs:
-            value = actionarg.Value
-            rpcarg = actionarg.RPCArg
-            kwargs = self._getdict(kwargs, rpcarg.name, value)
-        kwargs['key'] = action.id
-        kwargs['ident'] = action.ident
-        return kwargs
+        #kwargs = {}
+        #for actionarg in actionargs:
+            #value = actionarg.Value
+            #rpcarg = actionarg.RPCArg
+            #kwargs = self._getdict(kwargs, rpcarg.name, value)
+        #kwargs['key'] = action.id
+        #kwargs['ident'] = action.ident
+        return actionargs
 
     def addValue(self, sensor_id, value):
         value = SensorValues.create(Sensor=sensor_id, Value=str(value))
 
+    def getsensorfunctions(self, match_id):
+        return SensorFunctions.select(SensorFunctions, Sensors).join(Sensors).where(SensorFunctions.Match == match_id)
+
+    def gettriggerfunctions(self, match_id):
+        return TriggerFunctions.select(TriggerFunctions, Triggers).join(Triggers).where(TriggerFunctions.Match == match_id)
+
     def gettriggersfromsensor(self, sensor_id):
-        funcs = SensorFunctions.select(SensorFunctions, Triggers).join(Triggers).where(SensorFunctions.Sensor == sensor_id)
-        return [sensorfunc.Trigger for sensorfunc in funcs]
-    
-    def getsensorfunctions(self, trigger_id):
-        return SensorFunctions.select(SensorFunctions, Sensors).join(Sensors).where(SensorFunctions.Trigger == trigger_id)
-    
-    def gettriggerfunctions(self, trigger_id):
-        return TriggerFunctions.select().where(TriggerFunctions.Trigger == trigger_id)
-    
+        funcs = Triggers.select(Triggers, Match).join(Match).join(SensorFunctions, JOIN_INNER).where(SensorFunctions.Sensor == sensor_id).iterator()
+        return [data for data in funcs]
+
     def gettriggersfromtrigger(self, trigger_id):
-        funcs = TriggerFunctions.select(TriggerFunctions, Triggers).join(Triggers).where((TriggerFunctions.UsedTrigger == trigger_id) 
-                                                                                         & (TriggerFunctions.Trigger != trigger_id))
-        return [triggerfunc.Trigger for triggerfunc in funcs]
-    
+        funcs = Triggers.select(Triggers, Match).join(Match)\
+            .join(TriggerFunctions)\
+            .where(
+                (TriggerFunctions.Trigger == trigger_id) &
+                (Triggers.id != trigger_id)).iterator()
+        return funcs
+              
     def addTrigger(self, name, trigger, sensorlist, descr=None):
         '''
             trigger string examples:
