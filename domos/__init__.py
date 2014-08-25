@@ -4,7 +4,7 @@ from domos.util.domossettings import domosSettings
 from domos.util.domoslog import rpclogger
 from domos.util.rpc import rpc
 from domos.modules.domosTime import domosTime
-from domos.util.trigger import *
+from domos.handlers import *
 import threading
 import multiprocessing
 import socket
