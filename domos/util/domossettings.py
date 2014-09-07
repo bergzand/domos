@@ -1,37 +1,85 @@
 from configparser import ConfigParser
-
+import logging
+import shlex
 
 class domosSettings:
-    dbconfigpath = "db_config.cfg"
-    dbname = "domos"
+    #sections
+    dbsection = "database"
+    coresection = "core"
+    loggingsection = "logging"
+    dashisection = "exchange"
+    
     dbdefault = dict(user="user", host="localhost", password="password", driver="mysql", database="domos")
-
-    configpath = "dashiconfig.cfg"
-    dashisection = "dashi"
+    defaultconfig = 'defaults.cfg'
+    configpath = None
+    
     dashidefault = dict(sysname="domos", exchange="domos", amqp_uri="amqp://")
-    dbconfig = None
-    dashiconfig = None
+    config = None
 
+    @staticmethod
+    def setConfigFile(file):
+        domosSettings.configpath = file
+
+    @staticmethod
+    def reloadConfig():
+        pass
+
+    @staticmethod
+    def _readConfig():
+        if not domosSettings.config:
+            config = ConfigParser()
+            config.read_file(open(domosSettings.defaultconfig))
+            config.read(domosSettings.configpath)
+            domosSettings.config = config
+        return domosSettings.config
+            
     @staticmethod
     def getDBConfig():
-        if not(domosSettings.dbconfig):
-            dbconfig = ConfigParser(domosSettings.dbdefault)
-            dbconfig.read(domosSettings.dbconfigpath)
-            if not dbconfig.has_section(domosSettings.dbname):
-                dbconfig.add_section(domosSettings.dbname)
-            with open(domosSettings.dbconfigpath, 'w') as file:
-                dbconfig.write(file)
-            domosSettings.dbconfig = dict(dbconfig.items(domosSettings.dbname))
-        return domosSettings.dbconfig
+        configmapping = [('driver','driver','sqlite'),
+                         ('database','database','domos.db'),
+                         ('host','host', None),
+                         ('user','username', None),
+                         ('password','password', None)]
+        config = domosSettings._readConfig()
+        cfg = {}
+        for dictmap, configmap, default in configmapping:
+            cfg[dictmap] = config.get(domosSettings.dbsection, configmap, fallback=default)
+        return cfg
 
     @staticmethod
-    def getDashiConfig():
-        if not(domosSettings.dashiconfig):
-            config = ConfigParser(domosSettings.dashidefault)
-            config.read(domosSettings.configpath)
-            if not config.has_section(domosSettings.dashisection):
-                config.add_section(domosSettings.dashisection)
-            with open(domosSettings.configpath, 'w') as file:
-                config.write(file)
-            domosSettings.dashiconfig = dict(config.items(domosSettings.dashisection))
-        return domosSettings.dashiconfig
+    def getExchangeConfig():
+        config = domosSettings._readConfig()
+        return dict(config.items(domosSettings.dashisection))
+
+    @staticmethod
+    def getLoggingConfig():
+        config = domosSettings._readConfig()
+        cfg = {}
+        files = config.get(domosSettings.loggingsection, 'logfiles', fallback='stdout')
+        logfiles = [tuple(logfile.split(':',1)) for logfile in shlex.split(files)]
+        cfg['logfiles'] = logfiles
+        cfg['stdout'] = config.getboolean(domosSettings.loggingsection, 'stdoutlog', fallback=False)
+        cfg['defaultlevel'] = config.get(domosSettings.loggingsection, 'defaultlevel', fallback='warning')
+        levels = config.get(domosSettings.loggingsection, 'loglevels', fallback='warn')
+        cfg['loglevels'] = [tuple(loglevel.split(':', 1)) for loglevel in shlex.split(levels)]
+        return cfg
+    
+    @staticmethod
+    def getLoggingLevel(logger):
+        loglevels = {'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'warning': logging.WARNING,
+            'error': logging.ERROR,
+            'critical': logging.CRITICAL}
+        config = domosSettings._readConfig()
+        levels = config.get(domosSettings.loggingsection, 'loglevels', fallback='')
+        loglevel = logging.WARNING
+        for logsetting in shlex.split(levels):
+            part, level = logsetting.split(':',1)
+            if part == logger:
+                loglevel = loglevels[level]
+                break
+        else:
+            loglevel = loglevels[config.get(domosSettings.loggingsection, 'defaultlevel', fallback='warning')]
+        return loglevel
+        
