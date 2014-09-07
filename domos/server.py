@@ -28,7 +28,6 @@ class messagehandler(threading.Thread):
         self.rpc.handle(self.addSensor, "addSensor")
         self.rpc.handle(self.getSensorValue, "getSensorValue")
         rpchandle = domoslog.rpchandler(self.rpc)
-        rpchandle.setLevel(logging.DEBUG)
         self.logger = logging.getLogger('Core')
         self.logger.addHandler(rpchandle)
         self.logger.setLevel(domosSettings.getLoggingLevel('core'))
@@ -52,6 +51,8 @@ class messagehandler(threading.Thread):
             self.actionqueue = self.actionhandler.getqueue()
             self.triggerchecker.setactionqueue(self.actionqueue)
             self.actionhandler.start()
+            self.apihandler = apihandler()
+            self.apihandler.start()
         else:
             self.shutdown = True
         
@@ -116,6 +117,36 @@ class messagehandler(threading.Thread):
 
     def end(self):
         self.shutdown = True
+
+class apihandler(threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.shutdown = False
+        self.name = 'api'
+        self.rpc = rpc(self.name)
+        self.rpc.log_info("starting rpc api thread")
+        rpchandle = domoslog.rpchandler(self.rpc)
+        self.logger = logging.getLogger('api')
+        self.logger.addHandler(rpchandle)
+        self.logger.setLevel(domosSettings.getLoggingLevel('api'))
+        self.rpc.handle(self.listModules, "getModules")
+        self.db = dbhandler()
+        
+    def listModules(self):
+        modules = [[module.name,
+                    module.queue,
+                    module.Active] for module in self.db.getModules()]
+        return modules
+    
+    def listSensors(self, module=None):
+        pass
+    
+    def run(self):
+        self.logger.info("start consuming api calls")
+        while not self.shutdown:
+            self.rpc.listen()
+
 
 class domos:
     def __init__(self, args):
