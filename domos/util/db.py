@@ -1,6 +1,8 @@
 
 from peewee import *
 import datetime
+import math
+import statistics
 
 dbconn = Proxy()
 
@@ -46,20 +48,6 @@ class Sensors(BaseModel):
     ident = CharField()
     Active = BooleanField(default=True)
     Instant = BooleanField(default=False)
-    
-    def last(self, num=1, instantvalue=0):
-        #returns the last - num value from the database
-        if self.Instant:
-            return {'Sensor': self.id, 'Value': 0,}
-        else:
-            selection = SensorValues.select().where(SensorValues.Sensor == self.id).order_by(SensorValues.Timestamp.desc()).limit(num)
-            return selection.offset(num).dicts().get()
-
-    def avg(self, num):
-        #returns the average of the last num values
-        selection = SensorValues.select().where(Sensors.id == self.id)
-        return selection.dicts().limit(num).offset(num)['Value']
-
 
 class SensorValues(BaseModel):
     Sensor = ForeignKeyField(Sensors, on_delete='CASCADE')
@@ -69,6 +57,9 @@ class SensorValues(BaseModel):
 
     class meta:
         order_by = ('-Timestamp',)
+        indexes = (
+            (('Sensor', 'Timestamp'), True)
+            )
 
 
 class SensorArgs(BaseModel):
@@ -87,6 +78,7 @@ class Match(BaseModel):
     Matchstring = CharField()
     Pickled = BlobField(null=True)
 
+
 class Triggers(BaseModel):
     Name = CharField()
     Match = ForeignKeyField(Match)
@@ -99,6 +91,7 @@ class Triggers(BaseModel):
         else:
             return '0'
 
+
 class TriggerValues(BaseModel):
     Trigger = ForeignKeyField(Triggers, on_delete='CASCADE')
     Value = CharField()
@@ -107,6 +100,9 @@ class TriggerValues(BaseModel):
 
     class meta:
         order_by = ('-Timestamp',)
+        indexes = (
+            (('Trigger', 'Timestamp'), True)
+            )
 
 
 class SensorFunctions(BaseModel):
@@ -142,9 +138,11 @@ class ActionsForTrigger(BaseModel):
 
 
 class dbhandler:
-    def __init__(self, conf=None):
+    def __init__(self, conf=None, database=None):
         self.connected = False
-        if conf:
+        if database:
+            self.databaseconn = database
+        elif conf:
             try:
                 driver = conf.pop('driver')
             except:
@@ -160,7 +158,7 @@ class dbhandler:
                 elif driver == 'postgres':
                     databaseconn = PostgresqlDatabase(database, threadlocals=True, **conf)
                 elif driver == 'sqlite':
-                    databaseconn == SqliteDatabase(database, threadlocals=True, **conf)
+                    databaseconn = SqliteDatabase(database, threadlocals=True, **conf)
                 else:
                     raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
                 if databaseconn:
@@ -290,6 +288,9 @@ class dbhandler:
         else:
             return {key: value}
 
+    def getModules(self):
+        return Module.select().naive().iterator()
+    
     def getModule(self, modulename):
         return Module.get(Module.name == modulename)
     
@@ -371,7 +372,7 @@ class dbhandler:
     def addTrigger(self, name, trigger, sensorlist, descr=None):
         '''
             trigger string examples:
-            "__sens0__ == True"
+            "__trig0__ == True"
         '''
         trigger = Triggers.create(Name=name, Trigger=trigger)
     
@@ -390,4 +391,86 @@ class dbhandler:
     def getActionsfromtrigger(self, trigger_id):
         actions = ActionsForTrigger.select(ActionsForTrigger, Actions).join(Actions).where(ActionsForTrigger.Trigger == trigger_id)
         return [action for action in actions]
-        
+
+
+class sensorops:
+    
+    def operation(sensorfunction):
+        op = {
+        'last': sensorops.last,
+        'avg': sensorops.avg,
+        'sum': sensorops.sumation,
+        'diff': sensorops.diff,
+        'tdiff': sensorops.tdiff,
+        }[sensorfunction.Function]
+        print('looking up value with')
+        return op(sensorfunction.Sensor, sensorfunction.Args)
+
+    @staticmethod
+    def _lastrecords(sensor, num):
+        if sensor.Instant:
+            return []
+        else:
+            return SensorValues.select().where(SensorValues.Sensor == sensor).order_by(SensorValues.Timestamp.desc()).limit(num).naive()
+
+    @staticmethod
+    def last(sensor, num):
+        last = sensorops._lastrecords(sensor, int(num))
+        if last:
+            return last.select().offset(num).dicts().get()['Value']
+        else:
+            return 0
+
+    @staticmethod
+    def sumation(sensor, num):
+        selection = sensorops._lastrecords(sensor, num)
+        if last:
+            result = math.fsum((int(i.Value) for i in selection))
+            return result
+        else:
+            return 0
+
+    @staticmethod
+    def avg(sensor, num):
+        selection = sensorops._lastrecords(sensor, num)
+        if last:
+            result = statistics.mean((int(i.Value) for i in selection))
+            return result
+        else:
+            return 0
+
+    @staticmethod
+    def diff(sensor, args):
+        selection = sensorops._lastrecords(sensor, 2)
+        if selection:
+            try:
+                result1 = float(selection[0].Value)
+                result2 = float(selection[1].Value)
+            except:
+                raise sensorerror(sensor, 'could not convert values to floating point numbers')
+            result = result1 - result2
+        else:
+            result = 0
+        return result
+
+    def tdiff(sensor, args):
+        selection = sensorops._lastrecords(sensor, 2)
+        if selection:
+            result1 = selection[0]
+            result2 = selection[1]
+            print(type(result1.Timestamp))
+            result = (int(result1.Value) - int(result2.Value))/(result1.Timestamp - result2.Timestamp).total_seconds()
+        else:
+            result = 0
+        return result
+
+class triggeroperations:
+    
+    @staticmethod
+    def last(trigger, num):
+        pass
+
+class sensorerror(Exception):                                    
+    def __init__(self, sensor, message):
+        self.sensor = sensor
+        self.message = message
