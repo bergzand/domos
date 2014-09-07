@@ -1,4 +1,5 @@
 import logging as logging
+import logging.handlers
 import json
 from threading import Thread
 import domos.util.domossettings as ds
@@ -10,22 +11,32 @@ from pprint import pprint
 
 class rpclogger(Thread):
     
-    DEBUG = logging.DEBUG
-    INFO = logging.INFO
-    WARNING = logging.WARNING
-    ERROR = logging.ERROR
-    CRITICAL = logging.CRITICAL
+    loglevel = {'debug': logging.DEBUG,
+                'info': logging.INFO,
+                'warning': logging.WARNING,
+                'error': logging.ERROR,
+                'critical': logging.CRITICAL}
     
     def __init__(self):
         self.done = False
         Thread.__init__(self)
         self.name = "log"
-        dashiconfig = domosSettings.getDashiConfig()
-        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['sysname'])
+        dashiconfig = domosSettings.getExchangeConfig()
+        self.logcfg = domosSettings.getLoggingConfig()
+        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"],
+                                     dashiconfig['exchange'],
+                                     sysname = dashiconfig['prefix'])
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.ch = logging.StreamHandler()
-        self.ch.setFormatter(formatter)
-        self.ch.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger('Log')
+        self.logchannels = []
+        for level, logfile in self.logcfg['logfiles']:
+            if logfile == 'stdout':
+                ch = logging.StreamHandler()
+            else:
+                ch = logging.handlers.WatchedFileHandler(logfile)
+            ch.setLevel(rpclogger.loglevel[level])
+            ch.setFormatter(formatter)
+            self.logger.addHandler(ch)
         #register dashi handler functions
         self.dashi.handle(self.logrecord, "logrecord")
 
@@ -38,7 +49,7 @@ class rpclogger(Thread):
 
     def logrecord(self, record):
         logrecord = logging.makeLogRecord(record)
-        self.ch.handle(logrecord)
+        self.logger.handle(logrecord)
 
     def end(self):
         self.done = True
