@@ -3,17 +3,20 @@
 import socket
 import sys
 from threading import Thread
-from domos import domos
 import argparse
 
+
 def domosclient(args):
+    from domos.client import client
     pass
 
+
 def domosserver(args):
-    print(args)
-    dom = domos()
+    from domos.server import domos
+    dom = domos(args)
     dom.main()
-    
+
+
 def parsersettings(parser):
     subparsers = parser.add_subparsers(title='subcommands', dest='cmd')
     serverparser = subparsers.add_parser('server', help='Server', description='Domos server')
@@ -29,7 +32,6 @@ def parsersettings(parser):
     serverparser.add_argument('--configfile', '-f',
                               help='location of the configfile to use')
 
-    
     return parser
 
 
