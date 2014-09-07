@@ -55,7 +55,7 @@ class triggerChecker(threading.Thread):
         if loglevel:
             self.logger.setLevel(loglevel)
         else:
-            self.logger.setLevel(logging.ERROR)
+            self.logger.setLevel(domosSettings.getLoggingLevel('Trigger'))
         if loghandler:
             self.logger.addHandler(loghandler)
         self.logger.debug("Initializing trigger checker thread")
@@ -140,7 +140,7 @@ class actionhandler(threading.Thread):
         if loglevel:
             self.logger.setLevel(loglevel)
         else:
-            self.logger.setLevel(logging.ERROR)
+            self.logger.setLevel(domosSettings.getLoggingLevel('Action'))
         if loghandler:
             self.logger.addHandler(loghandler)
         self.logger.debug("Initializing action checker thread")
