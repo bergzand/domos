@@ -1,7 +1,7 @@
 from dashi import DashiConnection
 import domos.util.domossettings as ds
 from domos.util.domossettings import domosSettings
-from domos.util.domoslog import rpclogger
+import domos.util.domoslog as domoslog
 from domos.util.rpc import rpc
 from domos.modules.domosTime import domosTime
 from domos.handlers import *
@@ -9,6 +9,7 @@ import threading
 import multiprocessing
 import socket
 import peewee
+import logging
 from time import sleep
 import pprint
 from domos.util.db import *
@@ -26,24 +27,28 @@ class messagehandler(threading.Thread):
         self.rpc.handle(self.sensorValue, "sensorValue")
         self.rpc.handle(self.addSensor, "addSensor")
         self.rpc.handle(self.getSensorValue, "getSensorValue")
-
+        rpchandle = domoslog.rpchandler(self.rpc)
+        rpchandle.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger('Core')
+        self.logger.addHandler(rpchandle)
+        self.logger.setLevel(logging.DEBUG)
         self.rpc.log_info("Initializing database")
         db_success = False
         try:
             self.db = dbhandler(domosSettings.getDBConfig())
             self.db.connect()
         except peewee.ImproperlyConfigured as err:
-            self.rpc.log_crit("Cannot use database connection: {}".format(err))
+            self.logger.critical("Cannot use database connection: {}".format(err))
         except peewee.OperationalError as err:
-            self.rpc.log_crit("Database connection error: {}".format(str(err)))
+            self.logger.critical("Database connection error: {}".format(str(err)))
         if self.db.connected:
             self.db.create_tables()
             self.db.init_tables()
-            self.rpc.log_info("Done initializing database")
-            self.triggerchecker = triggerChecker(logger=self.rpc)
+            self.logger.info("Done initializing database")
+            self.triggerchecker = triggerChecker(loghandler=rpchandle, loglevel=logging.DEBUG)
             self.triggerqueue = self.triggerchecker.getqueue()
             self.triggerchecker.start()
-            self.actionhandler = actionhandler(self.rpc, logger=self.rpc)
+            self.actionhandler = actionhandler(self.rpc, loghandler=rpchandle, loglevel=logging.DEBUG)
             self.actionqueue = self.actionhandler.getqueue()
             self.triggerchecker.setactionqueue(self.actionqueue)
             self.actionhandler.start()
@@ -71,15 +76,15 @@ class messagehandler(threading.Thread):
                                 arg.get('descr', None)) for arg in rpc['args']]
                 self.db.addRPC(module, rpc['key'], rpc['type'], argslist)
         else:
-            self.rpc.log_debug("Sending sensors to module")
+            self.logger.debug("Sending sensors to module")
             return self.db.getModuleSensors(module)
 
     def addSensor(self, module_id=0, data=None, send=False):
         #add sensor to the database, if send is True, also send it to the module
-        self.rpc.log_info('adding sensor from module {0} with ident {1}'.format(module_id, data['ident']))
+        self.logger.info('adding sensor from module {0} with ident {1}'.format(module_id, data['ident']))
         module = self.db.getModuleByID(module_id)
         sensor = self.db.addSensor(module, data['ident'], data)
-        self.rpc.log_info('Sensor added')
+        self.logger.info('Sensor added')
         if send:
             self.sendSensor(module, sensor)
 
@@ -92,20 +97,20 @@ class messagehandler(threading.Thread):
     def sensorValue(self, data=None):
         #print(data)
         try:
-            self.rpc.log_debug('logging trigger value for {0} with value {1}'.format(data['ident'],data['value']))
+            self.logger.debug('logging trigger value for {0} with value {1}'.format(data['ident'],data['value']))
             self.db.addValue(data['key'], data['value'])
         except Exception as e:
-            self.rpc.log_warn('Something went wrong registering trigger value for {0}: {1}'.format(data['ident'], e))
+            self.logger.warn('Something went wrong registering trigger value for {0}: {1}'.format(data['ident'], e))
         else:
             #lauch trigger checks
-            self.rpc.log_debug('posting sensordata to trigger processor')
+            self.logger.debug('posting sensordata to trigger processor')
             self.triggerqueue.put(("sensor", data['key'], data['value']))
 
     def addTrigger(self):
         pass
 
     def run(self):
-        self.rpc.log_info("starting Dashi consumer")
+        self.logger.info("starting Dashi consumer")
         while not self.shutdown:
             self.rpc.listen()
 
@@ -117,7 +122,7 @@ class domos:
         pass
 
     def main(self):
-        logger = rpclogger()
+        logger = domoslog.rpclogger()
         logger.start()
         msgh = messagehandler()
         if msgh.shutdown:
@@ -128,14 +133,4 @@ class domos:
             dt = domosTime()
             dt.start()
             msgh.rpc.log_info('waiting for modules to register')
-            sleep(1)
-            #moduleargs = {'module_id': 1, 'send': True, 'data': {'ident': 'Sensortest', 'start.second': '*/20' }}
-            #msgh.rpc.call('domoscore', 'addSensor', **moduleargs)
             msgh.join()
-
-        #kwargs = {'key': 'test', 'ident': 'testMain', 'jobtype': 'Toggle', 'start': {'second': '10,30,50'}, 'stop': {'second':'0,20,40'}}
-
-        
-        #msgh.rpc.call('domoscore', 'sendAllSensors')
-        #print(msgh.dashi.call('domosTime','getTimers'))
-        #print(msgh.dashi.call('domoscore','getSensorValue', **{'sensor_id': 1}))
