@@ -8,7 +8,8 @@ import argparse
 
 def domosclient(args):
     from domos.client import client
-    pass
+    client = client(args)
+    client.main()
 
 
 def domosserver(args):
@@ -25,6 +26,7 @@ def parsersettings(parser):
                                          description='Domos client')
     clientparser.set_defaults(func=domosclient)
 
+    
     serverparser.add_argument('--verbose', '-v', action='count',
                               help='Verbosity of the server')
     serverparser.add_argument('--daemon', '-d', action='store_true',
@@ -32,6 +34,8 @@ def parsersettings(parser):
     serverparser.add_argument('--configfile', '-f',
                               help='location of the configfile to use')
 
+    clientcommands = clientparser.add_subparsers(title='client commands', dest='clientcmd')
+    clientcommands.add_parser('list_modules', description='List all modules')
     return parser
 
 
