@@ -29,10 +29,14 @@ class domosSettings:
         if not domosSettings.config:
             config = ConfigParser()
             config.read_file(open(domosSettings.defaultconfig))
-            config.read(domosSettings.configpath)
+            try:
+                config.read(domosSettings.configpath)
+            except TypeError:
+                #print('No config supplied, using defaults')
+                pass
             domosSettings.config = config
         return domosSettings.config
-            
+
     @staticmethod
     def getDBConfig():
         configmapping = [('driver','driver','sqlite'),
@@ -63,14 +67,14 @@ class domosSettings:
         levels = config.get(domosSettings.loggingsection, 'loglevels', fallback='warn')
         cfg['loglevels'] = [tuple(loglevel.split(':', 1)) for loglevel in shlex.split(levels)]
         return cfg
-    
+
     @staticmethod
     def getLoggingLevel(logger):
         loglevels = {'debug': logging.DEBUG,
-            'info': logging.INFO,
-            'warning': logging.WARNING,
-            'error': logging.ERROR,
-            'critical': logging.CRITICAL}
+                     'info': logging.INFO,
+                     'warning': logging.WARNING,
+                     'error': logging.ERROR,
+                     'critical': logging.CRITICAL}
         config = domosSettings._readConfig()
         levels = config.get(domosSettings.loggingsection, 'loglevels', fallback='')
         loglevel = logging.WARNING
