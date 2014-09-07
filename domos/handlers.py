@@ -7,7 +7,7 @@ from domos.util.domossettings import domosSettings
 from domos.util.db import *
 import peewee
 import pprint
-
+import logging
 
 GRAMMAR = """
     start: lgc;             // This is the top of the hierarchy
@@ -16,26 +16,30 @@ GRAMMAR = """
     ?add: ( add add_symbol )? mul;
     ?mul: ( mul mul_symbol )? exp;
     ?exp: ( exp exp_symbol )? atom;
-    @atom: neg | number | string | sensor | trigger | true_symbol | false_symbol | '\(' add '\)';
+    @atom: neg | number | string | sensor | trigger | true_symbol | false_symbol | parenthesis;
+    parenthesis: popen_sym add pclose_sym;
     neg: '-' atom;
     true_symbol: 'True' | 'true' | 'Yes' | 'yes';
     false_symbol: 'False' | 'false' | 'No' | 'no';
     string: '[\"]\w+[\"]';
-    number: '[\d.]+';       // Regular expression for a decimal number
-    sensor: '__sens\d+__';   // Sensor db macro match
-    trigger: '__trig\d+__'; //trigger db macro match
+    number: '[\d.]+';           // Regular expression for a decimal number
+    sensor: '__sens\d+__';      // Sensor database match
+    trigger: '__trig\d+__';     // trigger database match
+    macro: '__macr\d+__';       // macro database match
     mul_symbol: '\*' | '/' | '//' | '%'; // Match * or / or %
     add_symbol: '\+' | '-'; // Match + or -
     exp_symbol: '\*\*';
     eql_symbol: '==' | '<=' | '!=' | '>=' |'<' | '>';
     lgc_symbol: '\|\|' | '\&\&';
     bit_symbol: '\|' | '\&' | '\^';
+    popen_sym: '\(';
+    pclose_sym: '\)';
     WHITESPACE: '[ \t]+' (%ignore);
 """
     
 class triggerChecker(threading.Thread):
     
-    def __init__(self, queue=None, logger=None):
+    def __init__(self, queue=None, loghandler=None, loglevel = None):
         """
         triggerchecker thread class.
         keeps watching a queue for sensor or triggers that changed and
@@ -47,15 +51,14 @@ class triggerChecker(threading.Thread):
         threading.Thread.__init__(self)
         self.actionqueue = None
         self.shutdown = False
-        if logger:
-            self.logger = logger
+        self.logger = logging.getLogger('Trigger')
+        if loglevel:
+            self.logger.setLevel(loglevel)
         else:
-            self.logger.log_debug = lambda self, msg: None
-            self.logger.log_info = lambda self, msg: None
-            self.logger.log_warn = lambda self, msg: None
-            self.logger.log_error = lambda self, msg: None
-            self.logger.log_crit = lambda self, msg: None
-        self.logger.log_debug("Initializing trigger checker thread")
+            self.logger.setLevel(logging.ERROR)
+        if loghandler:
+            self.logger.addHandler(loghandler)
+        self.logger.debug("Initializing trigger checker thread")
         
         self.grammar = Grammar(GRAMMAR)
         if not queue:
@@ -67,7 +70,7 @@ class triggerChecker(threading.Thread):
             self.db.connect()
             self.calculator = matchcalculator(self.db, grammar=GRAMMAR)
         except:
-            self.logger.log_crit("Could not connect to database, shutting down")
+            self.logger.critical("Could not connect to database, shutting down")
             self.shutdown = True
 
     def getqueue(self):
@@ -92,7 +95,7 @@ class triggerChecker(threading.Thread):
         triggervalue = self.calculator.resolve(match, item)
         print("New:",triggervalue,"old:",trigger.Lastvalue)
         if trigger.Lastvalue != triggervalue:
-            self.logger.log_debug("Trigger {0} now has value {1}".format(trigger.id, triggervalue))
+            self.logger.debug("Trigger {0} now has value {1}".format(trigger.id, triggervalue))
             self.db.addTriggervalue(trigger, triggervalue)
             self.q.put(("trigger", trigger.id, triggervalue))
             if self.actionqueue:
@@ -105,7 +108,7 @@ class triggerChecker(threading.Thread):
          the ID of the sensor/trigger and the new value.
         """
         type, id, value = item
-        self.logger.log_debug("Receiving item message")
+        self.logger.debug("Receiving item message")
         if type == "sensor":
             triggers = self.db.gettriggersfromsensor(id)
         elif type == "trigger":
@@ -130,18 +133,17 @@ class actionhandler(threading.Thread):
     Action handler thread. Separate thread for handling and activating actions.
     '''
 
-    def __init__(self, rpc, queue=None, logger=None):
+    def __init__(self, rpc, queue=None, loghandler=None, loglevel=None):
         threading.Thread.__init__(self)
         self.shutdown = False
-        if logger:
-            self.logger = logger
+        self.logger = logging.getLogger('Action')
+        if loglevel:
+            self.logger.setLevel(loglevel)
         else:
-            self.logger.log_debug = lambda self, msg: None
-            self.logger.log_info = lambda self, msg: None
-            self.logger.log_warn = lambda self, msg: None
-            self.logger.log_error = lambda self, msg: None
-            self.logger.log_crit = lambda self, msg: None
-        self.logger.log_debug("Initializing action checker thread")
+            self.logger.setLevel(logging.ERROR)
+        if loghandler:
+            self.logger.addHandler(loghandler)
+        self.logger.debug("Initializing action checker thread")
         self.rpc = rpc
         if not queue:
             self.q = qu.Queue()
@@ -152,7 +154,7 @@ class actionhandler(threading.Thread):
             self.db.connect()
             self.calculator = matchcalculator(self.db, GRAMMAR)
         except:
-            self.logger.log_crit("Could not connect to database, shutting down")
+            self.logger.crit("Could not connect to database, shutting down")
             self.shutdown = True
 
     def getqueue(self):
@@ -176,7 +178,7 @@ class actionhandler(threading.Thread):
         #get all actions attached
         type, trigger, value = item
         actions = self.db.getActionsfromtrigger(trigger)
-        self.logger.log_debug("Found {} action with trigger".format(len(actions)))
+        self.logger.debug("Found {} action with trigger".format(len(actions)))
         for action in actions:
             #check if action is activated
             active = self.calculator.resolve(action.Match, item)
@@ -184,9 +186,9 @@ class actionhandler(threading.Thread):
             try:
                 active = float(active)
             except:
-                self.logger.log_debug("Parsing action activation condition as string")
+                self.logger.debug("Parsing action activation condition as string")
             if active:
-                self.logger.log_info("Calling action {}".format(action.Action.ident))
+                self.logger.info("Calling action {}".format(action.Action.ident))
                 self._callaction(action.Action)
                 
 
@@ -229,7 +231,7 @@ class matchcalculator:
                     pass
                 sensorvars[str(func.id)] = value
             else:
-                dictval = func.Sensor.last()['Value']
+                dictval = sensorops.operation(func)
                 try:
                     dictval = float(dictval)
                 except:
@@ -299,6 +301,9 @@ class Calc(STransformer):
         triggerid = exp.tail[0][6:-2]
         return self.trigvars.get(triggerid,0)
     
+    def _macr_operator(self, exp):
+        return 4        #random dice roll
+    
     number      = lambda self, exp: float(exp.tail[0])
     true_symbol = lambda self, exp: float(1)
     false_symbol = lambda self, exp: float(0)
@@ -306,7 +311,9 @@ class Calc(STransformer):
     __default__ = lambda self, exp: exp.tail[0]
     sensor      = _sens_operator
     trigger     = _trig_operator
+    macro       = _macr_operator
     string      = lambda self, exp: str(exp.tail[0][1:-1])
+    parenthesis = lambda self, exp: exp.tail[1]
     
     add = _bin_operator
     mul = _bin_operator
