@@ -31,7 +31,7 @@ class messagehandler(threading.Thread):
         rpchandle.setLevel(logging.DEBUG)
         self.logger = logging.getLogger('Core')
         self.logger.addHandler(rpchandle)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(domosSettings.getLoggingLevel('core'))
         self.rpc.log_info("Initializing database")
         db_success = False
         try:
@@ -45,10 +45,10 @@ class messagehandler(threading.Thread):
             self.db.create_tables()
             self.db.init_tables()
             self.logger.info("Done initializing database")
-            self.triggerchecker = triggerChecker(loghandler=rpchandle, loglevel=logging.DEBUG)
+            self.triggerchecker = triggerChecker(loghandler=rpchandle)
             self.triggerqueue = self.triggerchecker.getqueue()
             self.triggerchecker.start()
-            self.actionhandler = actionhandler(self.rpc, loghandler=rpchandle, loglevel=logging.DEBUG)
+            self.actionhandler = actionhandler(self.rpc, loghandler=rpchandle)
             self.actionqueue = self.actionhandler.getqueue()
             self.triggerchecker.setactionqueue(self.actionqueue)
             self.actionhandler.start()
@@ -118,8 +118,10 @@ class messagehandler(threading.Thread):
         self.shutdown = True
 
 class domos:
-    def __init__(self):
-        pass
+    def __init__(self, args):
+        self.args = args
+        self.configfile = args.configfile
+        ds.domosSettings.setConfigFile(self.configfile)
 
     def main(self):
         logger = domoslog.rpclogger()
