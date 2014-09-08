@@ -161,12 +161,12 @@ class actionhandler(threading.Thread):
         return self.q
         
     def _callaction(self, action):
-        actionargs = self.db.getActionDict(action)
+        actionargs = self.db.getActions(action)
         kwargs = {}
         for actionarg in actionargs:
             value = self.calculator.resolve(actionarg.Value)
             rpcarg = actionarg.RPCArg
-            kwargs = self.db._getdict(kwargs, rpcarg.name, value)
+            kwargs = self.db.getdict(kwargs, rpcarg.name, value)
         kwargs['key'] = action.id
         kwargs['ident'] = action.ident
         module = action.Module

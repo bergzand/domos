@@ -78,7 +78,8 @@ class messagehandler(threading.Thread):
                 self.db.addRPC(module, rpc['key'], rpc['type'], argslist)
         else:
             self.logger.debug("Sending sensors to module")
-            return self.db.getModuleSensors(module)
+            sensors = self.db.getModuleSensors(module)
+            return [self.db.getSensorDict(sensor) for sensor in sensors]
 
     def addSensor(self, module_id=0, data=None, send=False):
         #add sensor to the database, if send is True, also send it to the module
@@ -131,17 +132,64 @@ class apihandler(threading.Thread):
         self.logger.addHandler(rpchandle)
         self.logger.setLevel(domosSettings.getLoggingLevel('api'))
         self.rpc.handle(self.listModules, "getModules")
+        self.rpc.handle(self.listSensors, "getSensors")
+        self.rpc.handle(self.listSensorArgs, "getArgs")
+        self.rpc.handle(self.listPrototypes, "getProtos")
+
         self.db = dbhandler()
-        
+
+
     def listModules(self):
         modules = [[module.name,
                     module.queue,
                     module.Active] for module in self.db.getModules()]
         return modules
-    
+
     def listSensors(self, module=None):
-        pass
-    
+        if module:
+            try:
+                sensors = self.db.getModuleSensors(self.db.getModule(module))
+            except DoesNotExist:
+                return None
+        else:
+            sensors = self.db.getSensors()
+        #convert to list   
+        return [[sensor.ident,
+                 sensor.Instant,
+                 sensor.Active,
+                 sensor.Module.name,
+                 sensor.descr] for sensor in sensors]
+
+    def listSensorArgs(self, sensor=None):
+        returnvalue = None
+        if not sensor:
+            pass
+        else:
+            print(sensor)
+            sensor = self.db.getSensorByIdent(sensor)
+            returnvalue = self.db.getSensorDict(sensor)
+        return returnvalue
+
+    def listPrototypes(self, module=None):
+        '''
+        returns a list of a 2 value tuple, key, arguments. Arguments
+        are a list of arguments, each containing a list containing the
+        name, type, optionality and description
+        '''
+        returnvalue = None
+        try:
+            module = self.db.getModule(module)
+        except DoesNotExist:
+            returnvalue = None
+        else:
+            rpcs = self.db.getRPCs(module, 'add')
+            print(rpcs)
+            returnvalue = [(rpc.Key, [[arg.name,
+                                       arg.RPCargtype,
+                                       arg.Optional,
+                                       arg.descr] for arg in rpc.args]) for rpc in rpcs]
+        return returnvalue
+
     def run(self):
         self.logger.info("start consuming api calls")
         while not self.shutdown:

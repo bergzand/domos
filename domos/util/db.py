@@ -37,7 +37,7 @@ class ModuleRPC(BaseModel):
 
 
 class RPCArgs(BaseModel):
-    ModuleRPC = ForeignKeyField(ModuleRPC, on_delete='CASCADE')
+    ModuleRPC = ForeignKeyField(ModuleRPC, on_delete='CASCADE', related_name='args')
     name = CharField()
     RPCargtype = CharField()
     Optional = BooleanField(default=False)
@@ -277,26 +277,36 @@ class dbhandler:
         if not newmodule:
             pass
 
-    def _getdict(self, kwarg, key, value):
+    def getdict(self, kwarg, key, value):
         if len(key.split('.', 1)) > 1:
             start, end = key.split('.', 1)
             if start not in kwarg:
                 kwarg[start] = {}
-            newdict = self._getdict(kwarg[start], end, value)
-            kwarg[start] = newdict
-            return kwarg
+            key, value = self.getdict(kwarg[start], end, value)
+            kwarg[start][key] = value
+            print(kwarg)
+            return start, kwarg[start]
         else:
-            return {key: value}
+            return key, value
 
     def getModules(self):
+        #returns an iterator with Module objects
         return Module.select().naive().iterator()
-    
+
+    def listModules(self):
+        #returns a list of modules
+        return [module for module in self.getModules()]
+
     def getModule(self, modulename):
+        #returns Module object with modulename
         return Module.get(Module.name == modulename)
-    
+
     def getModuleByID(self, id):
         return Module.get_by_id(id)
 
+    def getRPCs(self, module, type):
+        return ModuleRPC.select(ModuleRPC).join(RPCTypes).where((ModuleRPC.Module == module) & (RPCTypes.rpctype == type))
+        
     def getRPCCall(self, module, type):
         return ModuleRPC.select().join(RPCTypes).where((ModuleRPC.Module == module) & (RPCTypes.rpctype == type)).limit(1)[0]
 
@@ -320,32 +330,28 @@ class dbhandler:
         return sensor
 
     def getModuleSensors(self, module):
-        sensors = Sensors.select().where(Sensors.Module == module)
-        sensorlist = [self.getSensorDict(sensor) for sensor in sensors]
-        print(sensorlist)
-        return sensorlist
+        return Sensors.select(Sensors, Module).join(Module).where(Sensors.Module == module)
 
+    def getSensors(self):
+        return Sensors.select(Sensors, Module).join(Module)
+
+    def getSensorByIdent(self, ident):
+        return Sensors.get(Sensors.ident == ident)
+    
     def getSensorDict(self, sensor):
-        kwargs = dict()
         sensorargs = SensorArgs.select().where(SensorArgs.Sensor == sensor)
         kwargs = {}
         for sensorarg in sensorargs:
             value = sensorarg.Value
             rpcarg = sensorarg.RPCArg
-            kwargs = self._getdict(kwargs, rpcarg.name, value)
+            key, value = self.getdict(kwargs, rpcarg.name, value)
+            kwargs[key] = value
         kwargs['key'] = sensor.id
         kwargs['ident'] = sensor.ident
         return kwargs
 
-    def getActionDict(self, action):
+    def getActions(self, action):
         actionargs = ActionArgs.select(ActionArgs, RPCArgs).join(RPCArgs).where(ActionArgs.Action == action)
-        #kwargs = {}
-        #for actionarg in actionargs:
-            #value = actionarg.Value
-            #rpcarg = actionarg.RPCArg
-            #kwargs = self._getdict(kwargs, rpcarg.name, value)
-        #kwargs['key'] = action.id
-        #kwargs['ident'] = action.ident
         return actionargs
 
     def addValue(self, sensor_id, value):
