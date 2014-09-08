@@ -35,7 +35,15 @@ def parsersettings(parser):
                               help='location of the configfile to use')
 
     clientcommands = clientparser.add_subparsers(title='client commands', dest='clientcmd')
-    clientcommands.add_parser('list_modules', description='List all modules')
+    clientcommands.add_parser('list_modules', help='List all registered modules')
+    protocmds = clientcommands.add_parser('list_prototypes', help='List sensor prototypes')
+    protocmds.add_argument('module', nargs=1, help='Display prototypes from this module')
+
+    sensorcmds = clientcommands.add_parser('list_sensors', help='List sensors')
+    sensorcmds.add_argument('--module', '-m', nargs='?', help='module to query, all modules if omitted')
+
+    argcmds = clientcommands.add_parser('list_args',  help='List sensor arguments')
+    argcmds.add_argument('sensor', nargs=1, help='sensor to query')
     return parser
 
 
