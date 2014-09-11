@@ -1,0 +1,357 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api &mdash; Domos 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Domos 0.0.1 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Domos’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Domos’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Domos 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-domos.util.db">
+<span id="api"></span><h1>api<a class="headerlink" href="#module-domos.util.db" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="domos.util.db.ActionArgs">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ActionArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ActionArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arguments to send with an action RPC
+Action: Action to which the arguments belong
+RPCArgs: The argument
+Value: Value of this argument</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Actions">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Actions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Actions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actions to send to a module
+Module: The module to send the action to
+Ident: Identifier for this action</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.ActionsForTrigger">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ActionsForTrigger</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ActionsForTrigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Triggers to trigger an action</p>
+<ul class="simple">
+<li>Action: The action to trigger</li>
+<li>Trigger: which trigger triggers this action</li>
+<li>Match: Expression, the action is only executed</li>
+</ul>
+<p>if triggered and if the expression resolves to a non-False value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.BaseModel">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">BaseModel</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.BaseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base model of the database, provides default settings</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Macros">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Macros</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Macros" title="Permalink to this definition">¶</a></dt>
+<dd><p>Macro table, nothing more that key-value pairs</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Match">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Match</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Table that contains expressions used by other tables
+Matchsting: String containing the expression
+Pickled: binary blob containing the pickled AST of the expression</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Module">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Module</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model of a module</p>
+<ul class="simple">
+<li>Name: Name of the module</li>
+<li>queue: message queue the module is listening on</li>
+<li>Active: whether the module is active or not</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.ModuleRPC">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ModuleRPC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ModuleRPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>RPC a module supports.</p>
+<ul class="simple">
+<li>Module: foreign key to a module</li>
+<li>RPCType: foreign, the type of rpc</li>
+<li>key: Key to distiguish multiple rpc&#8217;s of the same type</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.RPCArgs">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">RPCArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.RPCArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arguments for a RPC</p>
+<ul class="simple">
+<li>ModuleRPC: foreign key to a RPC</li>
+<li>name: Name of the argument, used in the dictionary send to the module</li>
+<li>RPCargtype: Type of argument, eg: string, integer</li>
+<li>Optional: Whether the argument is optional</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.RPCTypes">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">RPCTypes</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.RPCTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Available types of RPC calls
+see also the rpctypes variable</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.SensorArgs">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Argument of a sensor, combination of a RPCArg and a sensor
+Sensor: The sensor for which the argument is
+RPCArg: The argument
+Value: The value of this argument</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.SensorFunctions">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorFunctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of Sensors used by expressions
+Sensor: which sensor to which...
+Match: Match using this sensor
+Function: Which function to use on the values of this sensor
+Args: Tuple of arguments for the sensor function</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.SensorValues">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorValues</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Values of a sensor, represents a measurement value 
+of the sensor at a certain point in time</p>
+<ul class="simple">
+<li>Sensor: associated sensor</li>
+<li>Value: measurement value</li>
+<li>Timestamp: Point in time of the value</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Sensors">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Sensors</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Sensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sensor</p>
+<p>Module: Module associated with the sensor
+Ident: identifier of the sensor
+Active: Whether the sensor is active or disabled
+Instant: is the sensor of the type Instant</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.TriggerFunctions">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerFunctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of triggers used by expressions
+Trigger: which trigger to which...
+Match: Match using this sensor
+Function: Which function to use on the values of this sensor
+Args: Tuple of arguments for the sensor function</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.TriggerValues">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerValues</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Values of triggers
+Trigger: Trigger to which this value belongs
+Value: The actual value
+Timestamp: Time at which this value was calculated</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Triggers">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Triggers</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Triggers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Table with triggers
+Name: Name of the trigger
+Match: foreign, match on which the trigger activates
+Record: Whether to log this trigger to the triggervalues table
+Lastvalue: Last calculated value of this trigger</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.dbhandler">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">dbhandler</tt><big>(</big><em>conf=None</em>, <em>database=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Database handler class</p>
+<dl class="method">
+<dt id="domos.util.db.dbhandler.addModule">
+<tt class="descname">addModule</tt><big>(</big><em>name</em>, <em>queue</em>, <em>active=True</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a module to the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; Name of the module</li>
+<li><strong>queue</strong> &#8211; queue to use at the message broker</li>
+<li><strong>active</strong> &#8211; Initialize the module as activated or not</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.addRPC">
+<tt class="descname">addRPC</tt><big>(</big><em>module</em>, <em>key</em>, <em>rpctype</em>, <em>args</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addRPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an rpc command to the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>module</strong> &#8211; module object</li>
+<li><strong>key</strong> &#8211; name of the rpc</li>
+<li><strong>rpctype</strong> &#8211; string of the type of the rpc</li>
+<li><strong>args</strong> &#8211; list of tuples, (name, type, optional, descr)</li>
+<li><strong>descr</strong> &#8211; description of the rpc request</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.addSensor">
+<tt class="descname">addSensor</tt><big>(</big><em>module</em>, <em>identifier</em>, <em>argdata</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addSensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>argdata: list of dicts with name=value pairs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.addTrigger">
+<tt class="descname">addTrigger</tt><big>(</big><em>name</em>, <em>trigger</em>, <em>sensorlist</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTrigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>trigger string examples:
+&#8220;__trig0__ == True&#8221;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the connection to the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.connect">
+<tt class="descname">connect</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a connection to the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.create_tables">
+<tt class="descname">create_tables</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.create_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to create a set of empty tables, silently fails if the table already exists</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.init_tables">
+<tt class="descname">init_tables</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.init_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize any preconfigured content that is needed for initial 
+start up. Currently only the RPCTypes table is filled and needed;
+All modules are configured as inactive</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="data">
+<dt id="domos.util.db.rpctypes">
+<tt class="descclassname">domos.util.db.</tt><tt class="descname">rpctypes</tt><em class="property"> = ['list', 'get', 'del', 'add', 'set']</em><a class="headerlink" href="#domos.util.db.rpctypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Peewee database models</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Domos&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Domos’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Domos 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Koen en Tim.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
