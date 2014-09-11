@@ -423,11 +423,17 @@ class dbhandler:
             return key, value
 
     def getModules(self):
-        #returns an iterator with Module objects
+        """returns an iterator with Module objects
+
+        :rtype: An one use iterator with :class:`Module` objects
+        """
         return Module.select().naive().iterator()
 
     def listModules(self):
-        #returns a list of modules
+        """returns a list with :class:`Module` objects
+
+        :rtype: A list with :class:`Module`
+        """
         return [module for module in self.getModules()]
 
     def getModule(self, modulename):

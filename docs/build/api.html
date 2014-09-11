@@ -312,6 +312,20 @@ argdata: list of dicts with name=value pairs</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="domos.util.db.dbhandler.getModules">
+<tt class="descname">getModules</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModules" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns an iterator with Module objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">An one use iterator with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="domos.util.db.dbhandler.getRPCCall">
 <tt class="descname">getRPCCall</tt><big>(</big><em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCCall" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -327,6 +341,20 @@ argdata: list of dicts with name=value pairs</p>
 <dd><p>Initialize any preconfigured content that is needed for initial 
 start up. Currently only the RPCTypes table is filled and needed;
 All modules are configured as inactive</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.listModules">
+<tt class="descname">listModules</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.listModules" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">A list with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
