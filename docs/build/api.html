@@ -94,9 +94,11 @@ Ident: Identifier for this action</p>
 <dl class="class">
 <dt id="domos.util.db.Match">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Match</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Match" title="Permalink to this definition">¶</a></dt>
-<dd><p>Table that contains expressions used by other tables
-Matchsting: String containing the expression
-Pickled: binary blob containing the pickled AST of the expression</p>
+<dd><p>Table that contains expressions used by other tables</p>
+<ul class="simple">
+<li>Matchsting: String containing the expression</li>
+<li>Pickled: binary blob containing the pickled AST of the expression</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
@@ -143,20 +145,24 @@ see also the rpctypes variable</p>
 <dl class="class">
 <dt id="domos.util.db.SensorArgs">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorArgs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Argument of a sensor, combination of a RPCArg and a sensor
-Sensor: The sensor for which the argument is
-RPCArg: The argument
-Value: The value of this argument</p>
+<dd><p>Argument of a sensor, combination of a RPCArg and a sensor</p>
+<ul class="simple">
+<li>Sensor: The sensor for which the argument is</li>
+<li>RPCArg: The argument</li>
+<li>Value: The value of this argument</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
 <dt id="domos.util.db.SensorFunctions">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorFunctions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mapping of Sensors used by expressions
-Sensor: which sensor to which...
-Match: Match using this sensor
-Function: Which function to use on the values of this sensor
-Args: Tuple of arguments for the sensor function</p>
+<dd><p>Mapping of Sensors used by expressions</p>
+<ul class="simple">
+<li>Sensor: which sensor to which...</li>
+<li>Match: Match using this sensor</li>
+<li>Function: Which function to use on the values of this sensor</li>
+<li>Args: Tuple of arguments for the sensor function</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
@@ -175,39 +181,45 @@ of the sensor at a certain point in time</p>
 <dt id="domos.util.db.Sensors">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Sensors</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Sensors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sensor</p>
-<p>Module: Module associated with the sensor
-Ident: identifier of the sensor
-Active: Whether the sensor is active or disabled
-Instant: is the sensor of the type Instant</p>
+<ul class="simple">
+<li>Module: Module associated with the sensor</li>
+<li>Ident: identifier of the sensor</li>
+<li>Active: Whether the sensor is active or disabled</li>
+<li>Instant: is the sensor of the type Instant</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
 <dt id="domos.util.db.TriggerFunctions">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerFunctions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mapping of triggers used by expressions
-Trigger: which trigger to which...
-Match: Match using this sensor
-Function: Which function to use on the values of this sensor
-Args: Tuple of arguments for the sensor function</p>
+<dd><p>Mapping of triggers used by expressions</p>
+<ul class="simple">
+<li>Trigger: which trigger to which...</li>
+<li>Match: Match using this sensor</li>
+<li>Function: Which function to use on the values of this sensor</li>
+<li>Args: Tuple of arguments for the sensor function</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
 <dt id="domos.util.db.TriggerValues">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerValues</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerValues" title="Permalink to this definition">¶</a></dt>
-<dd><p>Values of triggers
-Trigger: Trigger to which this value belongs
-Value: The actual value
-Timestamp: Time at which this value was calculated</p>
+<dd><p>Values of triggers</p>
+<ul class="simple">
+<li>Trigger: Trigger to which this value belongs</li>
+<li>Value: The actual value</li>
+<li>Timestamp: Time at which this value was calculated</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
 <dt id="domos.util.db.Triggers">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Triggers</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Triggers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Table with triggers
-Name: Name of the trigger
-Match: foreign, match on which the trigger activates
-Record: Whether to log this trigger to the triggervalues table
-Lastvalue: Last calculated value of this trigger</p>
+* Name: Name of the trigger
+* Match: foreign, match on which the trigger activates
+* Record: Whether to log this trigger to the triggervalues table
+* Lastvalue: Last calculated value of this trigger</p>
 </dd></dl>
 
 <dl class="class">
@@ -222,11 +234,14 @@ Lastvalue: Last calculated value of this trigger</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>name</strong> &#8211; Name of the module</li>
 <li><strong>queue</strong> &#8211; queue to use at the message broker</li>
 <li><strong>active</strong> &#8211; Initialize the module as activated or not</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The created module</p>
 </td>
 </tr>
 </tbody>
@@ -257,7 +272,8 @@ Lastvalue: Last calculated value of this trigger</p>
 <dl class="method">
 <dt id="domos.util.db.dbhandler.addSensor">
 <tt class="descname">addSensor</tt><big>(</big><em>module</em>, <em>identifier</em>, <em>argdata</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addSensor" title="Permalink to this definition">¶</a></dt>
-<dd><p>argdata: list of dicts with name=value pairs</p>
+<dd><p>Add a sensor to the database
+argdata: list of dicts with name=value pairs</p>
 </dd></dl>
 
 <dl class="method">
@@ -266,6 +282,11 @@ Lastvalue: Last calculated value of this trigger</p>
 <dd><p>trigger string examples:
 &#8220;__trig0__ == True&#8221;</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.checkSensorTriggers">
+<tt class="descname">checkSensorTriggers</tt><big>(</big><em>sensor</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.checkSensorTriggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="domos.util.db.dbhandler.close">
@@ -284,6 +305,21 @@ Lastvalue: Last calculated value of this trigger</p>
 <tt class="descname">create_tables</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.create_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Try to create a set of empty tables, silently fails if the table already exists</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.getActionsfromtrigger">
+<tt class="descname">getActionsfromtrigger</tt><big>(</big><em>trigger_id</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getActionsfromtrigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.getRPCCall">
+<tt class="descname">getRPCCall</tt><big>(</big><em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCCall" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="domos.util.db.dbhandler.getdict">
+<tt class="descname">getdict</tt><big>(</big><em>kwarg</em>, <em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getdict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="domos.util.db.dbhandler.init_tables">
