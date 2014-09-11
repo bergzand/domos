@@ -52,8 +52,8 @@ class RPCTypes(BaseModel):
 class ModuleRPC(BaseModel):
     """RPC a module supports. 
 
-    * Module: foreign key to a module
-    * RPCType: foreign, the type of rpc
+    * Module: foreign key to a :class:`Module`
+    * RPCType: foreign, the type of :class:`RPCType`
     * key: Key to distiguish multiple rpc's of the same type
     """
     Module = ForeignKeyField(Module, on_delete='CASCADE')
@@ -64,7 +64,7 @@ class ModuleRPC(BaseModel):
 class RPCArgs(BaseModel):
     """Arguments for a RPC
 
-    * ModuleRPC: foreign key to a RPC
+    * ModuleRPC: foreign key to a :class:`ModuleRPC`
     * name: Name of the argument, used in the dictionary send to the module
     * RPCargtype: Type of argument, eg: string, integer
     * Optional: Whether the argument is optional
@@ -78,7 +78,7 @@ class RPCArgs(BaseModel):
 class Sensors(BaseModel):
     """Sensor
     
-    * Module: Module associated with the sensor
+    * Module: :class:`Module` associated with the sensor
     * Ident: identifier of the sensor
     * Active: Whether the sensor is active or disabled
     * Instant: is the sensor of the type Instant
@@ -93,7 +93,7 @@ class SensorValues(BaseModel):
     """Values of a sensor, represents a measurement value 
     of the sensor at a certain point in time
 
-    * Sensor: associated sensor
+    * Sensor: associated :class:`Sensor`
     * Value: measurement value
     * Timestamp: Point in time of the value
     """
@@ -112,10 +112,10 @@ class SensorValues(BaseModel):
 
 
 class SensorArgs(BaseModel):
-    """Argument of a sensor, combination of a RPCArg and a sensor
+    """Argument of a sensor, combination of a :class:`RPCArg` and a :class:`Sensor`
     
-    * Sensor: The sensor for which the argument is
-    * RPCArg: The argument
+    * Sensor: The :class:`Sensor` for which the argument is
+    * RPCArg: The argument, of type :class:`RPCArgs`
     * Value: The value of this argument
     """
     Sensor = ForeignKeyField(Sensors, on_delete='CASCADE')
@@ -143,8 +143,9 @@ class Match(BaseModel):
 
 class Triggers(BaseModel):
     """Table with triggers
+
     * Name: Name of the trigger
-    * Match: foreign, match on which the trigger activates
+    * Match: foreign, class:`Match` on which the trigger activates
     * Record: Whether to log this trigger to the triggervalues table
     * Lastvalue: Last calculated value of this trigger
     """
@@ -157,7 +158,7 @@ class Triggers(BaseModel):
 class TriggerValues(BaseModel):
     """Values of triggers
     
-    * Trigger: Trigger to which this value belongs
+    * Trigger: :class:`Triggers` to which this value belongs
     * Value: The actual value
     * Timestamp: Time at which this value was calculated
     """
@@ -178,8 +179,8 @@ class TriggerValues(BaseModel):
 class SensorFunctions(BaseModel):
     """Mapping of Sensors used by expressions
     
-    * Sensor: which sensor to which...
-    * Match: Match using this sensor
+    * Sensor: which :class:`Sensors` to which...
+    * Match: :class:`Match` using this sensor
     * Function: Which function to use on the values of this sensor
     * Args: Tuple of arguments for the sensor function
     """
@@ -192,8 +193,8 @@ class SensorFunctions(BaseModel):
 class TriggerFunctions(BaseModel):
     """Mapping of triggers used by expressions
     
-    * Trigger: which trigger to which...
-    * Match: Match using this sensor
+    * Trigger: which :class:`Triggers` to which...
+    * Match: :class:`Match` using this sensor
     * Function: Which function to use on the values of this sensor
     * Args: Tuple of arguments for the sensor function
     """
@@ -205,7 +206,7 @@ class TriggerFunctions(BaseModel):
 
 class Actions(BaseModel):
     """Actions to send to a module
-    Module: The module to send the action to
+    Module: The :class:`Module` to send the action to
     Ident: Identifier for this action
     """
     Module = ForeignKeyField(Module)
@@ -227,7 +228,7 @@ class ActionsForTrigger(BaseModel):
     """Triggers to trigger an action
 
     * Action: The action to trigger
-    * Trigger: which trigger triggers this action
+    * Trigger: which :class:`Triggers` triggers this action
     * Match: Expression, the action is only executed 
 
     if triggered and if the expression resolves to a non-False value
@@ -308,7 +309,7 @@ class dbhandler:
     def init_tables(self):
         """Initialize any preconfigured content that is needed for initial 
         start up. Currently only the RPCTypes table is filled and needed;
-        All modules are configured as inactive
+        All :class:`Module` are configured as inactive
         """
         for type in rpctypes:
             try:
@@ -337,18 +338,18 @@ class dbhandler:
     def addModule(self, name, queue, active=True):
         """Add a module to the database.
         
-        :param name: Name of the module
+        :param name: Name of the :class:`Module`
         :param queue: queue to use at the message broker
         :param active: Initialize the module as activated or not
-        :rtype: The created module
+        :rtype: The created :class:`Module`
         """
         return Module.create(name=name, queue=queue, Active=active)
 
     def addRPC(self, module, key, rpctype, args, descr=None):
         """Adds an rpc command to the database
         
-        :param module: module object
-        :param key: name of the rpc
+        :param module: :class:`Module` object
+        :param key: name of the :class:`ModuleRPC`
         :param rpctype: string of the type of the rpc
         :param args: list of tuples, (name, type, optional, descr)
         :param descr: description of the rpc request

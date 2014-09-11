@@ -63,7 +63,7 @@ Value: Value of this argument</p>
 <dt id="domos.util.db.Actions">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Actions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Actions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Actions to send to a module
-Module: The module to send the action to
+Module: The <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> to send the action to
 Ident: Identifier for this action</p>
 </dd></dl>
 
@@ -73,7 +73,7 @@ Ident: Identifier for this action</p>
 <dd><p>Triggers to trigger an action</p>
 <ul class="simple">
 <li>Action: The action to trigger</li>
-<li>Trigger: which trigger triggers this action</li>
+<li>Trigger: which <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> triggers this action</li>
 <li>Match: Expression, the action is only executed</li>
 </ul>
 <p>if triggered and if the expression resolves to a non-False value</p>
@@ -117,8 +117,8 @@ Ident: Identifier for this action</p>
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ModuleRPC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ModuleRPC" title="Permalink to this definition">¶</a></dt>
 <dd><p>RPC a module supports.</p>
 <ul class="simple">
-<li>Module: foreign key to a module</li>
-<li>RPCType: foreign, the type of rpc</li>
+<li>Module: foreign key to a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></li>
+<li>RPCType: foreign, the type of <tt class="xref py py-class docutils literal"><span class="pre">RPCType</span></tt></li>
 <li>key: Key to distiguish multiple rpc&#8217;s of the same type</li>
 </ul>
 </dd></dl>
@@ -128,7 +128,7 @@ Ident: Identifier for this action</p>
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">RPCArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.RPCArgs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Arguments for a RPC</p>
 <ul class="simple">
-<li>ModuleRPC: foreign key to a RPC</li>
+<li>ModuleRPC: foreign key to a <a class="reference internal" href="#domos.util.db.ModuleRPC" title="domos.util.db.ModuleRPC"><tt class="xref py py-class docutils literal"><span class="pre">ModuleRPC</span></tt></a></li>
 <li>name: Name of the argument, used in the dictionary send to the module</li>
 <li>RPCargtype: Type of argument, eg: string, integer</li>
 <li>Optional: Whether the argument is optional</li>
@@ -145,10 +145,10 @@ see also the rpctypes variable</p>
 <dl class="class">
 <dt id="domos.util.db.SensorArgs">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorArgs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Argument of a sensor, combination of a RPCArg and a sensor</p>
+<dd><p>Argument of a sensor, combination of a <tt class="xref py py-class docutils literal"><span class="pre">RPCArg</span></tt> and a <tt class="xref py py-class docutils literal"><span class="pre">Sensor</span></tt></p>
 <ul class="simple">
-<li>Sensor: The sensor for which the argument is</li>
-<li>RPCArg: The argument</li>
+<li>Sensor: The <tt class="xref py py-class docutils literal"><span class="pre">Sensor</span></tt> for which the argument is</li>
+<li>RPCArg: The argument, of type <a class="reference internal" href="#domos.util.db.RPCArgs" title="domos.util.db.RPCArgs"><tt class="xref py py-class docutils literal"><span class="pre">RPCArgs</span></tt></a></li>
 <li>Value: The value of this argument</li>
 </ul>
 </dd></dl>
@@ -158,8 +158,8 @@ see also the rpctypes variable</p>
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorFunctions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mapping of Sensors used by expressions</p>
 <ul class="simple">
-<li>Sensor: which sensor to which...</li>
-<li>Match: Match using this sensor</li>
+<li>Sensor: which <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> to which...</li>
+<li>Match: <a class="reference internal" href="#domos.util.db.Match" title="domos.util.db.Match"><tt class="xref py py-class docutils literal"><span class="pre">Match</span></tt></a> using this sensor</li>
 <li>Function: Which function to use on the values of this sensor</li>
 <li>Args: Tuple of arguments for the sensor function</li>
 </ul>
@@ -171,7 +171,7 @@ see also the rpctypes variable</p>
 <dd><p>Values of a sensor, represents a measurement value 
 of the sensor at a certain point in time</p>
 <ul class="simple">
-<li>Sensor: associated sensor</li>
+<li>Sensor: associated <tt class="xref py py-class docutils literal"><span class="pre">Sensor</span></tt></li>
 <li>Value: measurement value</li>
 <li>Timestamp: Point in time of the value</li>
 </ul>
@@ -182,7 +182,7 @@ of the sensor at a certain point in time</p>
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Sensors</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Sensors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sensor</p>
 <ul class="simple">
-<li>Module: Module associated with the sensor</li>
+<li>Module: <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> associated with the sensor</li>
 <li>Ident: identifier of the sensor</li>
 <li>Active: Whether the sensor is active or disabled</li>
 <li>Instant: is the sensor of the type Instant</li>
@@ -194,8 +194,8 @@ of the sensor at a certain point in time</p>
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerFunctions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mapping of triggers used by expressions</p>
 <ul class="simple">
-<li>Trigger: which trigger to which...</li>
-<li>Match: Match using this sensor</li>
+<li>Trigger: which <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> to which...</li>
+<li>Match: <a class="reference internal" href="#domos.util.db.Match" title="domos.util.db.Match"><tt class="xref py py-class docutils literal"><span class="pre">Match</span></tt></a> using this sensor</li>
 <li>Function: Which function to use on the values of this sensor</li>
 <li>Args: Tuple of arguments for the sensor function</li>
 </ul>
@@ -206,7 +206,7 @@ of the sensor at a certain point in time</p>
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerValues</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerValues" title="Permalink to this definition">¶</a></dt>
 <dd><p>Values of triggers</p>
 <ul class="simple">
-<li>Trigger: Trigger to which this value belongs</li>
+<li>Trigger: <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> to which this value belongs</li>
 <li>Value: The actual value</li>
 <li>Timestamp: Time at which this value was calculated</li>
 </ul>
@@ -215,11 +215,13 @@ of the sensor at a certain point in time</p>
 <dl class="class">
 <dt id="domos.util.db.Triggers">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Triggers</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Triggers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Table with triggers
-* Name: Name of the trigger
-* Match: foreign, match on which the trigger activates
-* Record: Whether to log this trigger to the triggervalues table
-* Lastvalue: Last calculated value of this trigger</p>
+<dd><p>Table with triggers</p>
+<ul class="simple">
+<li>Name: Name of the trigger</li>
+<li>Match: foreign, class:<cite>Match</cite> on which the trigger activates</li>
+<li>Record: Whether to log this trigger to the triggervalues table</li>
+<li>Lastvalue: Last calculated value of this trigger</li>
+</ul>
 </dd></dl>
 
 <dl class="class">
@@ -235,13 +237,13 @@ of the sensor at a certain point in time</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>name</strong> &#8211; Name of the module</li>
+<li><strong>name</strong> &#8211; Name of the <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></li>
 <li><strong>queue</strong> &#8211; queue to use at the message broker</li>
 <li><strong>active</strong> &#8211; Initialize the module as activated or not</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The created module</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The created <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></p>
 </td>
 </tr>
 </tbody>
@@ -257,8 +259,8 @@ of the sensor at a certain point in time</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>module</strong> &#8211; module object</li>
-<li><strong>key</strong> &#8211; name of the rpc</li>
+<li><strong>module</strong> &#8211; <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> object</li>
+<li><strong>key</strong> &#8211; name of the <a class="reference internal" href="#domos.util.db.ModuleRPC" title="domos.util.db.ModuleRPC"><tt class="xref py py-class docutils literal"><span class="pre">ModuleRPC</span></tt></a></li>
 <li><strong>rpctype</strong> &#8211; string of the type of the rpc</li>
 <li><strong>args</strong> &#8211; list of tuples, (name, type, optional, descr)</li>
 <li><strong>descr</strong> &#8211; description of the rpc request</li>
@@ -340,7 +342,7 @@ argdata: list of dicts with name=value pairs</p>
 <tt class="descname">init_tables</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.init_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize any preconfigured content that is needed for initial 
 start up. Currently only the RPCTypes table is filled and needed;
-All modules are configured as inactive</p>
+All <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> are configured as inactive</p>
 </dd></dl>
 
 <dl class="method">
