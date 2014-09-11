@@ -93,7 +93,7 @@ class SensorValues(BaseModel):
     """Values of a sensor, represents a measurement value 
     of the sensor at a certain point in time
 
-    * Sensor: associated :class:`Sensor`
+    * Sensor: associated :class:`Sensors`
     * Value: measurement value
     * Timestamp: Point in time of the value
     """
@@ -112,9 +112,9 @@ class SensorValues(BaseModel):
 
 
 class SensorArgs(BaseModel):
-    """Argument of a sensor, combination of a :class:`RPCArg` and a :class:`Sensor`
+    """Argument of a sensor, combination of a :class:`RPCArg` and a :class:`Sensors`
     
-    * Sensor: The :class:`Sensor` for which the argument is
+    * Sensor: The :class:`Sensors` for which the argument is
     * RPCArg: The argument, of type :class:`RPCArgs`
     * Value: The value of this argument
     """
@@ -438,13 +438,24 @@ class dbhandler:
         return [module for module in self.getModules()]
 
     def getModule(self, modulename):
-        #returns Module object with modulename
+        """Query the database for a :class:`Module` by name
+
+        :param modulename: The name of the module to query for
+        :rtype: A :class:`Module` object
+        """
         return Module.get(Module.name == modulename)
 
-    def getModuleByID(self, id):
-        return Module.get_by_id(id)
+    def getModuleByID(self, moduleid):
+        """Query the database for a :class:`Module` by id
 
+        :param moduleid: The ID of the module
+        :rtype: A :class:`Module` object
+        """
+        return Module.get_by_id(moduleid)
+        
     def getRPCs(self, module, type):
+        """
+        """
         return ModuleRPC.select(ModuleRPC).join(RPCTypes).where((ModuleRPC.Module == module) & (RPCTypes.rpctype == type))
         
     def getRPCCall(self, module, type):
@@ -454,7 +465,11 @@ class dbhandler:
 
     def addSensor(self, module, identifier, argdata):
         """Add a sensor to the database
-            argdata: list of dicts with name=value pairs
+
+        :param module: The :class:`Module` to add the sensor to
+        :param identifier: An human readable identifier, ie: temp_outside
+        :type identifier: String
+        :param argdata: list of dicts with name=value pairs
         """
         sensor = Sensors()
         sensor.ident = identifier
@@ -472,12 +487,28 @@ class dbhandler:
         return sensor
 
     def getModuleSensors(self, module):
+        """Get an iterator of :class:`Sensors` belonging to a :class:`Module`
+        The sensor.module is also returned from the database
+
+        :param module: A :class:`Module` object
+        :rtype: An iterator with :class:`Sensors`
+        """
         return Sensors.select(Sensors, Module).join(Module).where(Sensors.Module == module)
 
     def getSensors(self):
+        """Returns an iterator with all :class:`Sensors` from the database
+
+        :rtype: An iterator with :class:`Sensors`
+        """
         return Sensors.select(Sensors, Module).join(Module)
 
     def getSensorByIdent(self, ident):
+        """Query the database for a :class:`Sensors` with the requested ident
+        Throws an exception of peewee.DoesNotExist when the requested ident does not exist
+
+        :param ident: The ident to query for
+        :rtype: A :class:`Sensors` object with the requested ident
+        """
         return Sensors.get(Sensors.ident == ident)
     
     def getSensorDict(self, sensor):
@@ -518,13 +549,17 @@ class dbhandler:
         return funcs
               
     def addTrigger(self, name, trigger, sensorlist, descr=None):
-        '''
-            trigger string examples:
-            "__trig0__ == True"
-        '''
+        """Add a trigger to the database
+        .. note:: Does not work yet
+        """
         trigger = Triggers.create(Name=name, Trigger=trigger)
     
     def addTriggervalue(self, trigger, value):
+        """Register a value to the database for a trigger, It checks whether the trigger should record all values and takes the required action
+
+        :param trigger: A :class:`Triggers` the value should be registered to
+        :param value: The value to register
+        """
         trigger.Lastvalue = value
         trigger.save()
         if trigger.Record:
