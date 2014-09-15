@@ -8,6 +8,7 @@ class domosSettings:
     coresection = "core"
     loggingsection = "logging"
     dashisection = "exchange"
+    websection = "webserver"
     
     dbdefault = dict(user="user", host="localhost", password="password", driver="mysql", database="domos")
     defaultconfig = 'defaults.cfg'
@@ -49,7 +50,13 @@ class domosSettings:
         for dictmap, configmap, default in configmapping:
             cfg[dictmap] = config.get(domosSettings.dbsection, configmap, fallback=default)
         return cfg
-
+    @staticmethod
+    def getSecretKey():
+        config = domosSettings._readConfig()
+        cfg = {}
+        cfg['secret_key'] = config.get(domosSettings.websection, 'secret_key', fallback='shhh')
+        return cfg
+        
     @staticmethod
     def getExchangeConfig():
         config = domosSettings._readConfig()
