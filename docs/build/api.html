@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -13,7 +15,7 @@
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
+        URL_ROOT:    '',
         VERSION:     '0.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -228,9 +230,9 @@ of the sensor at a certain point in time</p>
 <dt id="domos.util.db.dbhandler">
 <em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">dbhandler</tt><big>(</big><em>conf=None</em>, <em>database=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Database handler class</p>
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.addModule">
-<tt class="descname">addModule</tt><big>(</big><em>name</em>, <em>queue</em>, <em>active=True</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addModule" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">addModule</tt><big>(</big><em>self</em>, <em>name</em>, <em>queue</em>, <em>active=True</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a module to the database.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -250,9 +252,9 @@ of the sensor at a certain point in time</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.addRPC">
-<tt class="descname">addRPC</tt><big>(</big><em>module</em>, <em>key</em>, <em>rpctype</em>, <em>args</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addRPC" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">addRPC</tt><big>(</big><em>self</em>, <em>module</em>, <em>key</em>, <em>rpctype</em>, <em>args</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addRPC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds an rpc command to the database</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -271,9 +273,9 @@ of the sensor at a certain point in time</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.addSensor">
-<tt class="descname">addSensor</tt><big>(</big><em>module</em>, <em>identifier</em>, <em>argdata</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addSensor" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">addSensor</tt><big>(</big><em>self</em>, <em>module</em>, <em>identifier</em>, <em>argdata</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addSensor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a sensor to the database</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -290,16 +292,16 @@ of the sensor at a certain point in time</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.addTrigger">
-<tt class="descname">addTrigger</tt><big>(</big><em>name</em>, <em>trigger</em>, <em>sensorlist</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTrigger" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">addTrigger</tt><big>(</big><em>self</em>, <em>name</em>, <em>trigger</em>, <em>sensorlist</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTrigger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a trigger to the database
 .. note:: Does not work yet</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.addTriggervalue">
-<tt class="descname">addTriggervalue</tt><big>(</big><em>trigger</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTriggervalue" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">addTriggervalue</tt><big>(</big><em>self</em>, <em>trigger</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTriggervalue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register a value to the database for a trigger, It checks whether the trigger should record all values and takes the required action</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -315,37 +317,37 @@ of the sensor at a certain point in time</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.checkSensorTriggers">
-<tt class="descname">checkSensorTriggers</tt><big>(</big><em>sensor</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.checkSensorTriggers" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">checkSensorTriggers</tt><big>(</big><em>self</em>, <em>sensor</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.checkSensorTriggers" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">close</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close the connection to the database</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.connect">
-<tt class="descname">connect</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.connect" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">connect</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.connect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open a connection to the database</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.create_tables">
-<tt class="descname">create_tables</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.create_tables" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_tables</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.create_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Try to create a set of empty tables, silently fails if the table already exists</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getActionsfromtrigger">
-<tt class="descname">getActionsfromtrigger</tt><big>(</big><em>trigger_id</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getActionsfromtrigger" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getActionsfromtrigger</tt><big>(</big><em>self</em>, <em>trigger_id</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getActionsfromtrigger" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getModule">
-<tt class="descname">getModule</tt><big>(</big><em>modulename</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModule" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getModule</tt><big>(</big><em>self</em>, <em>modulename</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Query the database for a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> by name</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -359,9 +361,9 @@ of the sensor at a certain point in time</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getModuleByID">
-<tt class="descname">getModuleByID</tt><big>(</big><em>moduleid</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModuleByID" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getModuleByID</tt><big>(</big><em>self</em>, <em>moduleid</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModuleByID" title="Permalink to this definition">¶</a></dt>
 <dd><p>Query the database for a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> by id</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -375,9 +377,9 @@ of the sensor at a certain point in time</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getModuleSensors">
-<tt class="descname">getModuleSensors</tt><big>(</big><em>module</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModuleSensors" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getModuleSensors</tt><big>(</big><em>self</em>, <em>module</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModuleSensors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an iterator of <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> belonging to a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a>
 The sensor.module is also returned from the database</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -392,9 +394,9 @@ The sensor.module is also returned from the database</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getModules">
-<tt class="descname">getModules</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModules" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getModules</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModules" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns an iterator with Module objects</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -406,19 +408,19 @@ The sensor.module is also returned from the database</p>
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getRPCCall">
-<tt class="descname">getRPCCall</tt><big>(</big><em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCCall" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getRPCCall</tt><big>(</big><em>self</em>, <em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCCall" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getRPCs">
-<tt class="descname">getRPCs</tt><big>(</big><em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCs" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getRPCs</tt><big>(</big><em>self</em>, <em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getSensorByIdent">
-<tt class="descname">getSensorByIdent</tt><big>(</big><em>ident</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getSensorByIdent" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getSensorByIdent</tt><big>(</big><em>self</em>, <em>ident</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getSensorByIdent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Query the database for a <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> with the requested ident
 Throws an exception of peewee.DoesNotExist when the requested ident does not exist</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -433,9 +435,9 @@ Throws an exception of peewee.DoesNotExist when the requested ident does not exi
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getSensors">
-<tt class="descname">getSensors</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getSensors" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getSensors</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getSensors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an iterator with all <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> from the database</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -447,22 +449,22 @@ Throws an exception of peewee.DoesNotExist when the requested ident does not exi
 </table>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.getdict">
-<tt class="descname">getdict</tt><big>(</big><em>kwarg</em>, <em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getdict" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getdict</tt><big>(</big><em>self</em>, <em>kwarg</em>, <em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getdict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.init_tables">
-<tt class="descname">init_tables</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.init_tables" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">init_tables</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.init_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize any preconfigured content that is needed for initial 
 start up. Currently only the RPCTypes table is filled and needed;
 All <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> are configured as inactive</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="domos.util.db.dbhandler.listModules">
-<tt class="descname">listModules</tt><big>(</big><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.listModules" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">listModules</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.listModules" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns a list with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> objects</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -532,7 +534,7 @@ All <a class="reference internal" href="#domos.util.db.Module" title="domos.util
     </div>
     <div class="footer">
         &copy; Copyright 2014, Koen en Tim.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>
