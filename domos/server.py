@@ -61,7 +61,7 @@ class messagehandler(threading.Thread):
     def register(self, data=None):
         """RPC function to register a module
 
-        @param data: dictionary with the module data containing the name, queue and rpc's of the module 
+        :param data: dictionary with the module data containing the name, queue and rpc's of the module 
         """
         returnvalue = False
         try:
@@ -100,8 +100,8 @@ class messagehandler(threading.Thread):
     def sensorValue(self, key=None, value=None, timestamp=None):
         """RPC function to send a data value to the core. It also triggers the checking of depending triggers
 
-        @param key: key of the sensor, also the primary key of the sensor in the database
-        @param value: new value to send to the database
+        :param key: key of the sensor, also the primary key of the sensor in the database
+        :param value: new value to send to the database
         """
 
         try:
@@ -126,6 +126,7 @@ class messagehandler(threading.Thread):
         """
         self.shutdown = True
 
+
 class apihandler(threading.Thread):
 
     def __init__(self):
@@ -144,9 +145,7 @@ class apihandler(threading.Thread):
         self.rpc.handle(self.listSensors, "getSensors")
         self.rpc.handle(self.listSensorArgs, "getArgs")
         self.rpc.handle(self.listPrototypes, "getProtos")
-
         self.db = dbhandler()
-
 
     def listModules(self):
         """RPC api call, returns a list with a tuple with module data
@@ -161,7 +160,8 @@ class apihandler(threading.Thread):
     def listSensors(self, module=None):
         """RPC call, returns a list of tuples with sensors database
            (identifier, instant, activated, module name, description)
-        @param module: If a module is specified, it returns only sensors
+        
+        :param module: If a module is specified, it returns only sensors
         of that module
         """
         if module:
@@ -180,7 +180,8 @@ class apihandler(threading.Thread):
 
     def listSensorArgs(self, sensor=None):
         """RPC api call, lists all arguments of a sensor
-        @param: sensor: name of the sensor to query
+        
+        :param: sensor: name of the sensor to query
         """
         returnvalue = None
         if not sensor:
@@ -195,7 +196,7 @@ class apihandler(threading.Thread):
         are a list of arguments, each containing a list containing the
         name, type, optionality and description
         
-        @param module: Name of the module to query
+        :param module: Name of the module to query
         """
         returnvalue = None
         try:
