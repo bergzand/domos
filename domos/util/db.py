@@ -378,7 +378,10 @@ class dbhandler:
         
 
     def updateOrAddModule(self, moduledata):
+        """Add a module if it doesn't exist yet, update it if it does.
         
+        .. warning:: not yet implemented
+        """
         newmodule = False
         try:
             module = Module.get(Module.name == moduledata['name'])
@@ -524,10 +527,24 @@ class dbhandler:
         return kwargs
 
     def getActions(self, action):
+        """Returns an iterator of :class:`ActionArgs`, all belonging to one 
+        action
+        Use it to get the arguments for an action. It not only returns the 
+        :class:`ActionArgs`, but also the corresponding :class:`RPCArgs` objects
+        
+        :param action: The :class:`Actions` to get the arguments for
+        :rtype: An iterator of :class:`ActionArgs` with the :class:`RPCArgs` joined
+        """
         actionargs = ActionArgs.select(ActionArgs, RPCArgs).join(RPCArgs).where(ActionArgs.Action == action)
         return actionargs
 
     def addValue(self, sensor_id, value):
+        """Add a :class:`sensorValues` to the database. 
+        The timestamp is the time the record is added to the database
+        
+        :param sensor_id: The id of the :class:`Sensor` to add, a :class:`Sensor` object works too
+        :param value: The value to add
+        """
         value = SensorValues.create(Sensor=sensor_id, Value=str(value))
 
     def getsensorfunctions(self, match_id):
