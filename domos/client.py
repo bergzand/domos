@@ -59,7 +59,7 @@ class client:
     def getPrototype(self):
         module = self.args.module
         proto = self.rpc.call(client.apikey, 'getProtos', module=module)
-        headers = ['Name', 'Type','Optional','Description']
+        headers = ['Name', 'Type', 'Optional', 'Description']
         for rpcname, arguments in proto:
             print(rpcname+':')
             print(tabulate(arguments, headers, tablefmt='orgtbl'))
