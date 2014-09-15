@@ -114,19 +114,13 @@ class domosTime(Process):
         return returnvalue
 
     def _jobTrue(self, key, ident):
-        self.rpc.fire("domoscore", 'sensorValue', data={'key': key,
-                                                        'ident': ident,
-                                                        'value': '1'})
+        self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
     def _jobFalse(self, key, ident):
-        self.rpc.fire("domoscore", 'sensorValue', data={'key': key,
-                                                        'ident': ident,
-                                                        'value': '0'})
+        self.rpc.fire("domoscore", 'sensorValue', key=key, value='0')
 
     def _jobOnce(self, key, ident):
-        self.rpc.fire("domoscore", 'sensorValue', data={'key': key,
-                                                        'ident': ident,
-                                                        'value': '1'})
+        self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
     def getJobs(self):
         self.rpc.log_debug("All jobs requested")
