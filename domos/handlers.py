@@ -129,9 +129,8 @@ class triggerChecker(threading.Thread):
 
 
 class actionhandler(threading.Thread):
-    '''
-    Action handler thread. Separate thread for handling and activating actions.
-    '''
+    """Action handler thread. Separate thread for handling and activating actions.
+    """
 
     def __init__(self, rpc, queue=None, loghandler=None, loglevel=None):
         threading.Thread.__init__(self)
@@ -166,7 +165,8 @@ class actionhandler(threading.Thread):
         for actionarg in actionargs:
             value = self.calculator.resolve(actionarg.Value)
             rpcarg = actionarg.RPCArg
-            kwargs = self.db.getdict(kwargs, rpcarg.name, value)
+            key, value = self.db.getdict(kwargs, rpcarg.name, value)
+            kwarg[key] = value
         kwargs['key'] = action.id
         kwargs['ident'] = action.ident
         module = action.Module
