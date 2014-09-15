@@ -581,14 +581,6 @@ class dbhandler:
         trigger.save()
         if trigger.Record:
             value = TriggerValues.create(Trigger=trigger, Value=value)
-    
-    def checkSensorTriggers(self, sensor):
-        """
-        """
-        sensortriggers = Triggers.Select().Join(Functions).Where(Functions.Sensor == sensor)
-        for sensortrigger in sensortriggers:
-            pass
-            #check this sensor on true
 
     def getActionsfromtrigger(self, trigger_id):
         """
