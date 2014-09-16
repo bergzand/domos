@@ -19,22 +19,30 @@ class api:
         ret=[]
         for module in modules:
             print(module)
-            ret.append(module.jsjson())
+            ret.append(module.to_dict())
         print(ret)
         return json.dumps(ret)
     def getmodule(self,module_id):
         db = dbhandler(domosSettings.getDBConfig())
         db.connect()
-        module = db.getModuleByID(module_id)
-        print(module)
-        ret = module.jsjson()
+        module = Module.get(Module.id==module_id)
+        ret = module.to_dict()
         sensors = []
-        print(ret)
         for sensor in module.sensors:
-            sens=sensor.jsjson()
-            sens.pop('Module')
+            sens=sensor.to_dict()
             sensors.append(sens)
         ret['sensors']=sensors
+        rpcs = []
+        for rpc in module.rpcs:
+            r=rpc.to_dict()
+            r['RPCType']=r['RPCType'].to_dict()
+            args =[]
+            for arg in rpc.args:
+                a = arg.to_dict()
+                args.append(a)
+            r['args']=args
+            rpcs.append(r)
+        ret['rpcs']=rpcs
         print(ret)
         return json.dumps(ret)
             
