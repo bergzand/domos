@@ -119,7 +119,7 @@ class RPCArg(BaseModel):
 
 
 class Sensor(BaseModel):
-    translations=[('ident','name'),('active','active'),('instant','instant'),('desc','des')]
+    translations=[('name','name'),('active','active'),('instant','instant'),('desc','des')]
     module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
     name = CharField()
     active = BooleanField(default=True)
@@ -248,7 +248,7 @@ class VarTrigger(BaseModel):
 
 
 class Action(BaseModel):
-    translations=[('ident','name')]
+    translations=[('name','name')]
     module = ForeignKeyField(Module, related_name='actions')
     name = CharField()
 
@@ -362,7 +362,7 @@ class dbhandler:
             key, value = self.getdict(kwargs, rpcarg.name, value)
             kwargs[key] = value
         kwargs['key'] = sensor.id
-        kwargs['ident'] = sensor.ident
+        kwargs['name'] = sensor.name
         return kwargs
 
     def getActions(self, action):
