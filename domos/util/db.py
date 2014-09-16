@@ -10,28 +10,34 @@ rpctypes = ['list', 'get', 'del', 'add', 'set']
 
 
 class BaseModel(Model):
-    translations=[('id','id')]
+
+    translations = [('id', 'id')]
+
     class Meta:
         database = dbconn
 
     @classmethod
     def get_by_id(cls, num):
         return cls.get(cls.id == num)
-    def to_dict(self,**kwargs):
+
+    def to_dict(self, **kwargs):
         print(self.__class__)
-        if issubclass(self.__class__,BaseModel):
-            t = super(self.__class__,self).translations
+        if issubclass(self.__class__, BaseModel):
+            t = super(self.__class__, self).translations
         else:
             t = []
         print(t)
-        t+=self.translations
+        t += self.translations
         print(t)
-        d={name: getattr(self,variable) for variable,name in t}
+        d = {name: getattr(self, variable) for variable, name in t}
         return d
-        
-        
+
+
 class Module(BaseModel):
-    translations=[('name','name'),('queue','q'),('active','active'),('desc','des')]
+    translations = [('name', 'name'),
+                    ('queue', 'q'),
+                    ('active', 'active'),
+                    ('desc', 'des')]
     name = CharField()
     queue = CharField()
     active = BooleanField()
@@ -52,13 +58,15 @@ class Module(BaseModel):
 
 
 class RPCType(BaseModel):
-    translations=[('rpctype','rpctype'),('desc','des')]
+    translations = [('rpctype', 'rpctype'),
+                    ('desc', 'des')]
     rpctype = CharField()
     desc = TextField(null=True)
 
 
 class ModuleRPC(BaseModel):
-    translations=[('key','key'),('desc','des')]
+    translations = [('key', 'key'),
+                    ('desc', 'des')]
     module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
     rpctype = ForeignKeyField(RPCType)
     key = CharField()
@@ -68,7 +76,7 @@ class ModuleRPC(BaseModel):
     def add(cls, module, key, rpctype, args, desc=None):
         """
             Adds an rpc command to the database
-            
+
             :param module: module object
             :param key: name of the rpc
             :param rpctype: string of the type of the rpc
@@ -87,12 +95,11 @@ class ModuleRPC(BaseModel):
                             'ModuleRPC': newrpc}for name, rpctype, opt, decr in args]
                 RPCArg.insert_many(argdict).execute()
 
-
     @classmethod
     def get_by_module(cls, module, type=None):
         """
             Retrieve RPC's associated with a module
-            
+
             :param module: :class`Module` to retrieve remote procedures for
             :param type: type of rpc to return
             :rtype Iterator with remote procedures
@@ -104,8 +111,12 @@ class ModuleRPC(BaseModel):
             rtrn = ModuleRPC.select(ModuleRPC).join(RPCType).where((ModuleRPC.Module == module) & (RPCType.rpctype == type))
         return rtrn
 
+
 class RPCArg(BaseModel):
-    translations=[('name','name'),('rpcargtype','rpcargtype'),('optional','optional'),('desc','des')]
+    translations = [('name', 'name'),
+                    ('rpcargtype', 'rpcargtype'),
+                    ('optional', 'optional'),
+                    ('desc', 'des')]
     modulerpc = ForeignKeyField(ModuleRPC, on_delete='CASCADE', related_name='args')
     name = CharField()
     rpcargtype = CharField()
@@ -119,7 +130,10 @@ class RPCArg(BaseModel):
 
 
 class Sensor(BaseModel):
-    translations=[('name','name'),('active','active'),('instant','instant'),('desc','des')]
+    translations = [('name', 'name'),
+                    ('active', 'active'),
+                    ('instant', 'instant'),
+                    ('desc', 'des')]
     module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
     name = CharField()
     active = BooleanField(default=True)
@@ -160,11 +174,13 @@ class Sensor(BaseModel):
 
 
 class SensorValue(BaseModel):
-    translations=[('value','value'),('timestamp','timestamp'),('descr','des')]
+    translations = [('value', 'value'),
+                    ('timestamp', 'timestamp'),
+                    ('descr', 'des')]
     sensor = ForeignKeyField(Sensor, related_name='values', on_delete='CASCADE')
     value = CharField()
     timestamp = DateTimeField(default=datetime.datetime.now)
-    
+
     class meta:
         order_by = ('-Timestamp',)
         indexes = (
@@ -173,20 +189,20 @@ class SensorValue(BaseModel):
 
 
 class SensorArg(BaseModel):
-    translations=[('value','value')]
+    translations = [('value', 'value')]
     sensor = ForeignKeyField(Sensor, related_name='args', on_delete='CASCADE')
     rpcarg = ForeignKeyField(RPCArg)
     value = CharField()
 
 
 class Macro(BaseModel):
-    translations=[('name','name'),('value','value')]
+    translations = [('name', 'name'), ('value', 'value')]
     name = CharField()
     value = CharField()
 
 
 class Expression(BaseModel):
-    translations=[('expression','expression')]
+    translations = [('expression', 'expression')]
     expression = CharField()
     pickled = BlobField(null=True)
 
@@ -198,7 +214,9 @@ class Expression(BaseModel):
 
 
 class Trigger(BaseModel):
-    translations=[('name','name'),('record','record'),('lastvalue','lastvalue')]
+    translations = [('name', 'name'),
+                    ('record', 'record'),
+                    ('lastvalue', 'lastvalue')]
     name = CharField()
     expression = ForeignKeyField(Expression)
     record = BooleanField()
@@ -218,8 +236,10 @@ class Trigger(BaseModel):
         if self.record:
             value = TriggerValue.create(trigger=self, value=value)
 
+
 class TriggerValue(BaseModel):
-    translations=[('value','value'),('timestamp','timestamp')]
+    translations = [('value', 'value'),
+                    ('timestamp', 'timestamp')]
     trigger = ForeignKeyField(Trigger, related_name='values', on_delete='CASCADE')
     value = CharField()
     timestamp = DateTimeField(default=datetime.datetime.now)
@@ -232,7 +252,8 @@ class TriggerValue(BaseModel):
 
 
 class VarSensor(BaseModel):
-    translations=[('function','function'),('args','args')]
+    translations = [('function', 'function'),
+                    ('args', 'args')]
     sensor = ForeignKeyField(Sensor, related_name='functions')
     expression = ForeignKeyField(Expression)
     function = CharField()
@@ -240,7 +261,8 @@ class VarSensor(BaseModel):
 
 
 class VarTrigger(BaseModel):
-    translations=[('function','function'),('args','args')]
+    translations = [('function', 'function'),
+                    ('args', 'args')]
     trigger = ForeignKeyField(Trigger, related_name='functions')
     expression = ForeignKeyField(Expression)
     function = CharField()
@@ -248,7 +270,7 @@ class VarTrigger(BaseModel):
 
 
 class Action(BaseModel):
-    translations=[('name','name')]
+    translations = [('name', 'name')]
     module = ForeignKeyField(Module, related_name='actions')
     name = CharField()
 
