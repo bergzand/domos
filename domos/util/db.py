@@ -63,7 +63,7 @@ class Sensors(BaseModel):
     Active = BooleanField(default=True)
     Instant = BooleanField(default=False)
     def jsjson(self):
-        return dict(super(Module,self).jsjson(),
+        return dict(super(Sensors,self).jsjson(),
         **{'Module':self.Module,'ident':self.ident,'Active':self.Active,'Instant':self.Instant}
         )
 class SensorValues(BaseModel):

@@ -13,11 +13,11 @@ def domosclient(args):
 
 
 def domosserver(args):
-    dom = domos(args)
+    dom = server(args)
     dom.main()
     
 def domosweb(args):
-    dom=domosweb(args)
+    dom=web(args)
     dom.main()
 
 
@@ -42,14 +42,7 @@ def parsersettings(parser):
                                          description='Domos web')
     webparser.set_defaults(func=domosweb)
     webparser = web.parsersettings(webparser)
-    
-    
-
-    
-    
-    
-    
-        
+           
     return parser
 
 
