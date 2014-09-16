@@ -591,6 +591,7 @@ class dbhandler:
 
 class sensorops:
     
+    @staticmethod
     def operation(sensorfunction):
         op = {
         'last': sensorops.last,
@@ -663,11 +664,32 @@ class sensorops:
             result = 0
         return result
 
-class triggeroperations:
-    
+class triggerops:
+
+    @staticmethod
+    def operation(triggerfunction):
+        op = {
+        'last': triggerops.last,
+        #'avg':  triggerops.avg,
+        #'sum': triggerops.sumation,
+        #'diff': triggerops.diff,
+        #'tdiff': triggerops.tdiff,
+        }[triggerfunction.Function]
+        print('looking up value with')
+        return op(triggerfunction.Trigger, triggerfunction.Args)
+
+    @staticmethod
+    def _lastrecords(trigger, num):
+        return TriggerValues.select().where(TriggerValues.Trigger == trigger).order_by(TriggerValues.Timestamp.desc()).limit(num).naive()
+
     @staticmethod
     def last(trigger, num):
-        pass
+        last = triggerops._lastrecords(trigger, int(num))
+        if last:
+            return last.select().offset(num).dicts().get()['Value']
+        else:
+            return 0
+    
 
 class sensorerror(Exception):                                    
     def __init__(self, sensor, message):
