@@ -39,7 +39,7 @@ class RPCTypes(BaseModel):
         )
 
 class ModuleRPC(BaseModel):
-    Module = ForeignKeyField(Module, on_delete='CASCADE')
+    Module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
     RPCType = ForeignKeyField(RPCTypes)
     Key = CharField()
     def jsjson(self):
@@ -58,7 +58,7 @@ class RPCArgs(BaseModel):
         )
 
 class Sensors(BaseModel):
-    Module = ForeignKeyField(Module, on_delete='CASCADE')
+    Module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
     ident = CharField()
     Active = BooleanField(default=True)
     Instant = BooleanField(default=False)
@@ -67,7 +67,7 @@ class Sensors(BaseModel):
         **{'Module':self.Module,'ident':self.ident,'Active':self.Active,'Instant':self.Instant}
         )
 class SensorValues(BaseModel):
-    Sensor = ForeignKeyField(Sensors, on_delete='CASCADE')
+    Sensor = ForeignKeyField(Sensors, related_name='values', on_delete='CASCADE')
     Value = CharField()
     Timestamp = DateTimeField(default=datetime.datetime.now)
     descr = None
@@ -85,7 +85,7 @@ class SensorValues(BaseModel):
 
 
 class SensorArgs(BaseModel):
-    Sensor = ForeignKeyField(Sensors, on_delete='CASCADE')
+    Sensor = ForeignKeyField(Sensors, related_name='args', on_delete='CASCADE')
     RPCArg = ForeignKeyField(RPCArgs)
     Value = CharField()
     def jsjson(self):
@@ -129,7 +129,7 @@ class Triggers(BaseModel):
         )
 
 class TriggerValues(BaseModel):
-    Trigger = ForeignKeyField(Triggers, on_delete='CASCADE')
+    Trigger = ForeignKeyField(Triggers, related_name='values', on_delete='CASCADE')
     Value = CharField()
     Timestamp = DateTimeField(default=datetime.datetime.now)
     descr = None
@@ -147,7 +147,7 @@ class TriggerValues(BaseModel):
         )
 
 class SensorFunctions(BaseModel):
-    Sensor = ForeignKeyField(Sensors)
+    Sensor = ForeignKeyField(Sensors,related_name='functions')
     Match = ForeignKeyField(Match)
     Function = CharField()
     Args = CharField()
@@ -157,7 +157,7 @@ class SensorFunctions(BaseModel):
         )
 
 class TriggerFunctions(BaseModel):
-    Trigger = ForeignKeyField(Triggers)
+    Trigger = ForeignKeyField(Triggers, related_name='functions')
     Match = ForeignKeyField(Match)
     Function = CharField()
     Args = CharField()
@@ -167,7 +167,7 @@ class TriggerFunctions(BaseModel):
         )
 
 class Actions(BaseModel):
-    Module = ForeignKeyField(Module)
+    Module = ForeignKeyField(Module,related_name='actions')
     ident = CharField()
     def jsjson(self):
         return dict(super(Module,self).jsjson(),
@@ -175,7 +175,7 @@ class Actions(BaseModel):
         )
 
 class ActionArgs(BaseModel):
-    Action = ForeignKeyField(Actions)
+    Action = ForeignKeyField(Actions,related_name='args')
     RPCArg = ForeignKeyField(RPCArgs)
     Value = ForeignKeyField(Match)
     def jsjson(self):
@@ -185,8 +185,8 @@ class ActionArgs(BaseModel):
 
 class ActionsForTrigger(BaseModel):
     #mapping of triggers and actions
-    Action = ForeignKeyField(Actions)
-    Trigger = ForeignKeyField(Triggers)
+    Action = ForeignKeyField(Actions,related_name='triggers')
+    Trigger = ForeignKeyField(Triggers,related_name='actions')
     Match = ForeignKeyField(Match)
     def jsjson(self):
         return dict(super(Module,self).jsjson(),
