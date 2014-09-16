@@ -10,7 +10,6 @@ rpctypes = ['list', 'get', 'del', 'add', 'set']
 
 
 class BaseModel(Model):
-    descr = TextField(null=True)
 
     class Meta:
         database = dbconn
@@ -18,65 +17,65 @@ class BaseModel(Model):
     @classmethod
     def get_by_id(cls, num):
         return cls.get(cls.id == num)
+
     def jsjson(self):
-        return {'id':self.id,'descr':self.descr}
+        return {'id': self.id, 'descr': self.descr}
+
 
 class Module(BaseModel):
     name = CharField()
     queue = CharField()
-    Active = BooleanField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'name':self.name,'Active':self.Active,'queue':self.queue}
-        )
+    active = BooleanField()
+    desc = TextField(null=True)
 
+    @classmethod
+    def add(cls, name, queue, active=True):
+        return cls.create(name=name, queue=queue, Active=active)
 
-class RPCTypes(BaseModel):
+    @classmethod
+    def list(cls):
+        #returns a list of modules
+        return [module for module in cls.getModules()]
+
+    @classmethod
+    def get_by_name(cls, name):
+        return cls.get(Module.name == name)
+    
+
+class RPCType(BaseModel):
     rpctype = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'rpctype':self.rpctype}
-        )
+    desc = TextField(null=True)
+
 
 class ModuleRPC(BaseModel):
-    Module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
-    RPCType = ForeignKeyField(RPCTypes)
-    Key = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Module':self.Module,'RPCType':self.RPCType,'Key':self.Key}
-        )
+    module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
+    rpctype = ForeignKeyField(RPCType)
+    key = CharField()
+    desc = TextField(null=True)
 
-class RPCArgs(BaseModel):
-    ModuleRPC = ForeignKeyField(ModuleRPC, on_delete='CASCADE', related_name='args')
+
+class RPCArg(BaseModel):
+    modulerpc = ForeignKeyField(ModuleRPC, on_delete='CASCADE', related_name='args')
     name = CharField()
-    RPCargtype = CharField()
-    Optional = BooleanField(default=False)
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'ModuleRPC':self.ModuleRPC,'name':self.name,'RPCargtype':self.RPCargtype,'Optional':self.Optional}
-        )
+    rpcargtype = CharField()
+    optional = BooleanField(default=False)
+    desc = TextField(null=True)
 
-class Sensors(BaseModel):
-    Module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
+
+class Sensor(BaseModel):
+    module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
     ident = CharField()
-    Active = BooleanField(default=True)
-    Instant = BooleanField(default=False)
-    def jsjson(self):
-        return dict(super(Sensors,self).jsjson(),
-        **{'Module':self.Module,'ident':self.ident,'Active':self.Active,'Instant':self.Instant}
-        )
-class SensorValues(BaseModel):
-    Sensor = ForeignKeyField(Sensors, related_name='values', on_delete='CASCADE')
-    Value = CharField()
-    Timestamp = DateTimeField(default=datetime.datetime.now)
+    active = BooleanField(default=True)
+    instant = BooleanField(default=False)
+    desc = TextField(null=True)
+
+
+class SensorValue(BaseModel):
+    sensor = ForeignKeyField(Sensor, related_name='values', on_delete='CASCADE')
+    value = CharField()
+    timestamp = DateTimeField(default=datetime.datetime.now)
     descr = None
-    def jsjson(self):
-        superdict = super(Module,self).jsjson()
-        superdict.pop('descr')
-        return dict(superdict,
-        **{'Sensor':self.Sensor,'Value':self.Value,'Timestamp':self.Timestamp}
-        )
+
     class meta:
         order_by = ('-Timestamp',)
         indexes = (
@@ -84,114 +83,72 @@ class SensorValues(BaseModel):
             )
 
 
-class SensorArgs(BaseModel):
-    Sensor = ForeignKeyField(Sensors, related_name='args', on_delete='CASCADE')
-    RPCArg = ForeignKeyField(RPCArgs)
-    Value = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Sensor':self.Sensor,'RPCArg':self.RPCArg,'Value':self.Value}
-        )
+class SensorArg(BaseModel):
+    sensor = ForeignKeyField(Sensor, related_name='args', on_delete='CASCADE')
+    rpcarg = ForeignKeyField(RPCArg)
+    value = CharField()
 
-class Macros(BaseModel):
-    Name = CharField()
-    Value = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Name':self.Name,'Value':self.Value}
-        )
 
-class Match(BaseModel):
-    descr = None
-    Matchstring = CharField()
-    Pickled = BlobField(null=True)
-    def jsjson(self):
-        superdict = super(Module,self).jsjson()
-        superdict.pop('descr')
-        return dict(superdict,
-        **{'Matchstring':self.Matchstring}
-        )
+class Macro(BaseModel):
+    name = CharField()
+    value = CharField()
 
-class Triggers(BaseModel):
-    Name = CharField()
-    Match = ForeignKeyField(Match)
-    Record = BooleanField()
-    Lastvalue = CharField(null=True, default="null")
-    
-    def last(self, num=1):
-        if self.Lastvalue:
-            return self.Lastvalue
-        else:
-            return '0'
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Name':self.Name,'Match':self.Match,'Record':self.Record,'Lastvalue':self.Lastvalue}
-        )
 
-class TriggerValues(BaseModel):
-    Trigger = ForeignKeyField(Triggers, related_name='values', on_delete='CASCADE')
-    Value = CharField()
-    Timestamp = DateTimeField(default=datetime.datetime.now)
-    descr = None
+class Expression(BaseModel):
+    expression = CharField()
+    pickled = BlobField(null=True)
+
+
+class Trigger(BaseModel):
+    name = CharField()
+    expression = ForeignKeyField(Expression)
+    record = BooleanField()
+    lastvalue = CharField(null=True, default="null")
+
+
+class TriggerValue(BaseModel):
+    trigger = ForeignKeyField(Trigger, related_name='values', on_delete='CASCADE')
+    value = CharField()
+    timestamp = DateTimeField(default=datetime.datetime.now)
 
     class meta:
         order_by = ('-Timestamp',)
         indexes = (
             (('Trigger', 'Timestamp'), True)
             )
-    def jsjson(self):
-        superdict = super(Module,self).jsjson()
-        superdict.pop('descr')
-        return dict(superdict,
-        **{'Trigger':self.Trigger,'Value':self.Value,'Timestamp':self.Timestamp}
-        )
 
-class SensorFunctions(BaseModel):
-    Sensor = ForeignKeyField(Sensors,related_name='functions')
-    Match = ForeignKeyField(Match)
-    Function = CharField()
-    Args = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Sensor':self.Sensor,'Match':self.Match,'Function':self.Function,'Args':self.Args}
-        )
 
-class TriggerFunctions(BaseModel):
-    Trigger = ForeignKeyField(Triggers, related_name='functions')
-    Match = ForeignKeyField(Match)
-    Function = CharField()
-    Args = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Trigger':self.Trigger,'Match':self.Match,'Function':self.Function,'Args':self.Args}
-        )
+class VarSensor(BaseModel):
+    sensor = ForeignKeyField(Sensor, related_name='functions')
+    expression = ForeignKeyField(Expression)
+    function = CharField()
+    args = CharField()
 
-class Actions(BaseModel):
-    Module = ForeignKeyField(Module,related_name='actions')
+
+class VarTrigger(BaseModel):
+    trigger = ForeignKeyField(Trigger, related_name='functions')
+    expression = ForeignKeyField(Expression)
+    function = CharField()
+    args = CharField()
+
+
+class Action(BaseModel):
+    module = ForeignKeyField(Module, related_name='actions')
     ident = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Module':self.Module,'ident':self.ident}
-        )
 
-class ActionArgs(BaseModel):
-    Action = ForeignKeyField(Actions,related_name='args')
-    RPCArg = ForeignKeyField(RPCArgs)
-    Value = ForeignKeyField(Match)
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Action':self.Action,'RPCArg':self.RPCArg,'Value':self.Value}
-        )
 
-class ActionsForTrigger(BaseModel):
+class ActionArg(BaseModel):
+    action = ForeignKeyField(Action, related_name='args')
+    rpcarg = ForeignKeyField(RPCArg)
+    value = ForeignKeyField(Expression)
+
+
+class TriggerAction(BaseModel):
     #mapping of triggers and actions
-    Action = ForeignKeyField(Actions,related_name='triggers')
-    Trigger = ForeignKeyField(Triggers,related_name='actions')
-    Match = ForeignKeyField(Match)
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Action':self.Action,'Trigger':self.Trigger,'Match':self.Match}
-        )
+    action = ForeignKeyField(Action, related_name='triggers')
+    trigger = ForeignKeyField(Trigger, related_name='actions')
+    expression = ForeignKeyField(Expression)
+
 
 class dbhandler:
     def __init__(self, conf=None, database=None):
@@ -224,20 +181,20 @@ class dbhandler:
 
     def create_tables(self):
         tables = [Module,
-                  RPCTypes,
+                  RPCType,
                   ModuleRPC,
-                  RPCArgs,
-                  Match,
-                  Sensors,
-                  SensorValues,
-                  SensorArgs,
-                  Actions,
-                  Triggers,
-                  TriggerValues,
-                  SensorFunctions,
-                  TriggerFunctions,
-                  ActionsForTrigger,
-                  ActionArgs]
+                  RPCArg,
+                  Expression,
+                  Sensor,
+                  SensorValue,
+                  SensorArg,
+                  Action,
+                  Trigger,
+                  TriggerValue,
+                  VarSensor,
+                  VarTrigger,
+                  TriggerAction,
+                  ActionArg]
 
         for table in tables:
             try:
@@ -249,9 +206,9 @@ class dbhandler:
     def init_tables(self):
         for type in rpctypes:
             try:
-                RPCTypes.get(RPCTypes.rpctype == type)
-            except RPCTypes.DoesNotExist:
-                newtype = RPCTypes()
+                RPCType.get(RPCType.rpctype == type)
+            except RPCType.DoesNotExist:
+                newtype = RPCType()
                 newtype.rpctype = type
                 newtype.save()
         q = Module.update(Active=False)
@@ -266,9 +223,6 @@ class dbhandler:
         conn = dbconn.close()
         self.connected = False
         return conn
-
-    def addModule(self, name, queue, active=True):
-        return Module.create(name=name, queue=queue, Active=active)
 
     def addRPC(self, module, key, rpctype, args, descr=None):
         '''
@@ -289,49 +243,7 @@ class dbhandler:
                             'Optional':opt,
                             'descr': descr,
                             'ModuleRPC': newrpc}for name, rpctype, opt, decr in args]
-                RPCArgs.insert_many(argdict).execute()
-
-    def _checkArg(self, oldArg, newArg):
-        if oldArg == NewArg:
-            return True
-        else:
-            return False
-        
-    def _checkRPC(self, rpc, args):
-        pass
-        
-        
-
-    def updateOrAddModule(self, moduledata):
-        newmodule = False
-        try:
-            module = Module.get(Module.name == moduledata['name'])
-            module.Active = True
-            module.save()
-        except DoesNotExist:
-            module = Module()
-            module.name = moduledata['name']
-            module.queue = moduledata['queue']
-            module.active = True
-            module.save()
-        else:
-            newmodule = True
-            with dbconn.transaction():
-                for rpc in moduledata['rpc']:
-                    newrpc = ModuleRPC()
-                    newrpc.Module = module
-                    newrpc.Key = rpc['key']
-                    newrpc.RPCType = RPCTypes.get(RPCTypes.rpctype == rpc['type'])
-                    newrpc.save()
-                    if "args" in rpc:
-                        for arg in rpc['args']:
-                            newarg = RPCArgs()
-                            newarg.name = arg['name']
-                            newarg.RPCargtype = arg['type']
-                            newarg.ModuleRPC = newrpc
-                            newarg.save()
-        if not newmodule:
-            pass
+                RPCArg.insert_many(argdict).execute()
 
     def getdict(self, kwarg, key, value):
         if len(key.split('.', 1)) > 1:
@@ -348,10 +260,6 @@ class dbhandler:
     def getModules(self):
         #returns an iterator with Module objects
         return Module.select().naive().iterator()
-
-    def listModules(self):
-        #returns a list of modules
-        return [module for module in self.getModules()]
 
     def getModule(self, modulename):
         #returns Module object with modulename
@@ -531,13 +439,12 @@ class triggerops:
 
     @staticmethod
     def operation(triggerfunction):
-        op = {
-        'last': triggerops.last,
-        #'avg':  triggerops.avg,
-        #'sum': triggerops.sumation,
-        #'diff': triggerops.diff,
-        #'tdiff': triggerops.tdiff,
-        }[triggerfunction.Function]
+        op = {'last': triggerops.last,
+              #'avg':  triggerops.avg,
+              #'sum': triggerops.sumation,
+              #'diff': triggerops.diff,
+              #'tdiff': triggerops.tdiff,
+              }[triggerfunction.Function]
         print('looking up value with')
         return op(triggerfunction.Trigger, triggerfunction.Args)
 
