@@ -18,6 +18,7 @@ class api:
         ret=[]
         for module in modules:
             print(module)
-            ret.append({"id":module.id,"name":module.name,'description':module.descr})
+            ret.append(module.jsjson())
+        print(ret)
         return json.dumps(ret)
         
