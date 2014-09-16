@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 angular
-    .module('domos', ['ngRoute'])
+    .module('domos', ['ngRoute','ui.bootstrap'])
     .config(['$routeProvider', function($routeProvider) {
     $routeProvider
         .when('/', {
@@ -64,6 +64,25 @@ angular
         '$scope',
         '$http',
         function($scope,$http) {
+            
+            
+        }
+    ]).controller('ModuleController',[
+        '$scope',
+        '$http',
+        '$location',
+        '$routeParams',
+        function($scope,$http,$location,$routeParams) {
+            load=function(){
+                $http({method:'GET',url:'/api/getmodule/'+$routeParams.id})
+                        .success(function(data) {
+                               $scope.module = data
+                })
+            }
+            $scope.status = {
+
+            };
+            load()   
             
         }
     ])
