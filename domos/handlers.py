@@ -166,7 +166,7 @@ class actionhandler(threading.Thread):
             value = self.calculator.resolve(actionarg.Value)
             rpcarg = actionarg.RPCArg
             key, value = self.db.getdict(kwargs, rpcarg.name, value)
-            kwarg[key] = value
+            kwargs[key] = value
         kwargs['key'] = action.id
         kwargs['ident'] = action.ident
         module = action.Module
@@ -240,15 +240,15 @@ class matchcalculator:
         triggerfuncs = [func for func in self.db.gettriggerfunctions(match)]
         #TODO: add function dict
 
-        def _convtriggervar(trigger):
-            value = trigger.last()
+        def _convtriggervar(func):
+            value = triggerops.operation(func)
             try:
                 value = float(value)
             except:
                 pass
             return value
         triggervars = {str(func.id):
-                           _convtriggervar(func.Trigger)
+                           _convtriggervar(func)
                                 for func in triggerfuncs}
         return (sensorvars, triggervars)
 
