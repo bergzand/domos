@@ -18,9 +18,6 @@ class BaseModel(Model):
     def get_by_id(cls, num):
         return cls.get(cls.id == num)
 
-    def jsjson(self):
-        return {'id': self.id, 'descr': self.descr}
-
 
 class Module(BaseModel):
     name = CharField()
