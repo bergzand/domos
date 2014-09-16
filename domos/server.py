@@ -18,8 +18,6 @@ from domos.util.db import *
 class messagehandler(threading.Thread):
 
     def __init__(self):
-        """Create the core messagehandler. Also starts up depending threads
-        """ 
         threading.Thread.__init__(self)
         self.shutdown = False
         self.name = 'domoscore'
@@ -28,6 +26,7 @@ class messagehandler(threading.Thread):
         self.rpc.handle(self.register, "register")
         self.rpc.handle(self.sensorValue, "sensorValue")
         self.rpc.handle(self.addSensor, "addSensor")
+        self.rpc.handle(self.getSensorValue, "getSensorValue")
         rpchandle = domoslog.rpchandler(self.rpc)
         self.logger = logging.getLogger('Core')
         self.logger.addHandler(rpchandle)
@@ -57,12 +56,12 @@ class messagehandler(threading.Thread):
         else:
             self.shutdown = True
         
+                              
+    def getSensorValue(self, sensor_id):
+        sensor = Sensors.get_by_id(sensor_id)
+        return sensor.last()
 
     def register(self, data=None):
-        """RPC function to register a module
-
-        @param data: dictionary with the module data containing the name, queue and rpc's of the module 
-        """
         returnvalue = False
         try:
             module = self.db.getModule(data['name'])
@@ -97,40 +96,32 @@ class messagehandler(threading.Thread):
                       rpccall.Key,
                       **self.db.getSensorDict(sensor))
 
-    def sensorValue(self, key=None, value=None, timestamp=None):
-        """RPC function to send a data value to the core. It also triggers the checking of depending triggers
-
-        @param key: key of the sensor, also the primary key of the sensor in the database
-        @param value: new value to send to the database
-        """
-
+    def sensorValue(self, data=None):
+        #print(data)
         try:
-            self.logger.debug('logging trigger value for {0} with value {1}'.format(key,value))
-            self.db.addValue(key, value)
+            self.logger.debug('logging trigger value for {0} with value {1}'.format(data['ident'],data['value']))
+            self.db.addValue(data['key'], data['value'])
         except Exception as e:
-            self.logger.warn('Something went wrong registering trigger value for {0}: {1}'.format(key, e))
+            self.logger.warn('Something went wrong registering trigger value for {0}: {1}'.format(data['ident'], e))
         else:
             #lauch trigger checks
             self.logger.debug('posting sensordata to trigger processor')
-            self.triggerqueue.put(("sensor", key, value))
+            self.triggerqueue.put(("sensor", data['key'], data['value']))
+
+    def addTrigger(self):
+        pass
 
     def run(self):
-        """Start the core thread
-        """
         self.logger.info("starting Dashi consumer")
         while not self.shutdown:
             self.rpc.listen()
 
     def end(self):
-        """Stop the core thread
-        """
         self.shutdown = True
 
 class apihandler(threading.Thread):
 
     def __init__(self):
-        """Create a api handler. This is automaticaly build from the messagehandler
-        """
         threading.Thread.__init__(self)
         self.shutdown = False
         self.name = 'api'
@@ -149,21 +140,12 @@ class apihandler(threading.Thread):
 
 
     def listModules(self):
-        """RPC api call, returns a list with a tuple with module data
-           (name, queue, Active)
-
-        """
-        modules = [(module.name,
+        modules = [[module.name,
                     module.queue,
-                    module.Active) for module in self.db.getModules()]
+                    module.Active] for module in self.db.getModules()]
         return modules
 
     def listSensors(self, module=None):
-        """RPC call, returns a list of tuples with sensors database
-           (identifier, instant, activated, module name, description)
-        @param module: If a module is specified, it returns only sensors
-        of that module
-        """
         if module:
             try:
                 sensors = self.db.getModuleSensors(self.db.getModule(module))
@@ -171,32 +153,29 @@ class apihandler(threading.Thread):
                 return None
         else:
             sensors = self.db.getSensors()
-        #convert to list of tuples
-        return [(sensor.ident,
+        #convert to list   
+        return [[sensor.ident,
                  sensor.Instant,
                  sensor.Active,
                  sensor.Module.name,
-                 sensor.descr) for sensor in sensors]
+                 sensor.descr] for sensor in sensors]
 
     def listSensorArgs(self, sensor=None):
-        """RPC api call, lists all arguments of a sensor
-        @param: sensor: name of the sensor to query
-        """
         returnvalue = None
         if not sensor:
             pass
         else:
+            print(sensor)
             sensor = self.db.getSensorByIdent(sensor)
             returnvalue = self.db.getSensorDict(sensor)
         return returnvalue
 
     def listPrototypes(self, module=None):
-        """returns a list of a 2 value tuple, key, arguments. Arguments
+        '''
+        returns a list of a 2 value tuple, key, arguments. Arguments
         are a list of arguments, each containing a list containing the
         name, type, optionality and description
-        
-        @param module: Name of the module to query
-        """
+        '''
         returnvalue = None
         try:
             module = self.db.getModule(module)
@@ -204,15 +183,14 @@ class apihandler(threading.Thread):
             returnvalue = None
         else:
             rpcs = self.db.getRPCs(module, 'add')
-            returnvalue = [(rpc.Key, [(arg.name,
+            print(rpcs)
+            returnvalue = [(rpc.Key, [[arg.name,
                                        arg.RPCargtype,
                                        arg.Optional,
-                                       arg.descr) for arg in rpc.args]) for rpc in rpcs]
+                                       arg.descr] for arg in rpc.args]) for rpc in rpcs]
         return returnvalue
 
     def run(self):
-        """Start the api handler thread
-        """
         self.logger.info("start consuming api calls")
         while not self.shutdown:
             self.rpc.listen()
@@ -223,7 +201,14 @@ class domos:
         self.args = args
         self.configfile = args.configfile
         ds.domosSettings.setConfigFile(self.configfile)
-
+    @staticmethod
+    def parsersettings(parser):
+        
+        parser.add_argument('--verbose', '-v', action='count',
+                              help='Verbosity of the server')
+        parser.add_argument('--daemon', '-d', action='store_true',
+                              help='Verbosity of the server')
+        return parser
     def main(self):
         logger = domoslog.rpclogger()
         logger.start()
