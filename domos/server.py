@@ -238,3 +238,11 @@ class domos:
             dt.start()
             msgh.rpc.log_info('waiting for modules to register')
             msgh.join()
+    @staticmethod
+    def parsersettings(parser):
+        
+        parser.add_argument('--verbose', '-v', action='count',
+                              help='Verbosity of the server')
+        parser.add_argument('--daemon', '-d', action='store_true',
+                              help='Verbosity of the server')
+        return parser
