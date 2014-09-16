@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api &mdash; Domos 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Domos 0.0.1 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Domos’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Domos’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Domos 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-domos.util.db">
+<span id="api"></span><h1>api<a class="headerlink" href="#module-domos.util.db" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="domos.util.db.ActionArgs">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ActionArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ActionArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arguments to send with an action RPC
+Action: Action to which the arguments belong
+RPCArgs: The argument
+Value: Value of this argument</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Actions">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Actions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Actions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actions to send to a module
+Module: The <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> to send the action to
+Ident: Identifier for this action</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.ActionsForTrigger">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ActionsForTrigger</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ActionsForTrigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Triggers to trigger an action</p>
+<ul class="simple">
+<li>Action: The action to trigger</li>
+<li>Trigger: which <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> triggers this action</li>
+<li>Match: Expression, the action is only executed</li>
+</ul>
+<p>if triggered and if the expression resolves to a non-False value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.BaseModel">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">BaseModel</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.BaseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base model of the database, provides default settings</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Macros">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Macros</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Macros" title="Permalink to this definition">¶</a></dt>
+<dd><p>Macro table, nothing more that key-value pairs</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Match">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Match</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Table that contains expressions used by other tables</p>
+<ul class="simple">
+<li>Matchsting: String containing the expression</li>
+<li>Pickled: binary blob containing the pickled AST of the expression</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Module">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Module</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model of a module</p>
+<ul class="simple">
+<li>Name: Name of the module</li>
+<li>queue: message queue the module is listening on</li>
+<li>Active: whether the module is active or not</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.ModuleRPC">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">ModuleRPC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.ModuleRPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>RPC a module supports.</p>
+<ul class="simple">
+<li>Module: foreign key to a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></li>
+<li>RPCType: foreign, the type of <tt class="xref py py-class docutils literal"><span class="pre">RPCType</span></tt></li>
+<li>key: Key to distiguish multiple rpc&#8217;s of the same type</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.RPCArgs">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">RPCArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.RPCArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arguments for a RPC</p>
+<ul class="simple">
+<li>ModuleRPC: foreign key to a <a class="reference internal" href="#domos.util.db.ModuleRPC" title="domos.util.db.ModuleRPC"><tt class="xref py py-class docutils literal"><span class="pre">ModuleRPC</span></tt></a></li>
+<li>name: Name of the argument, used in the dictionary send to the module</li>
+<li>RPCargtype: Type of argument, eg: string, integer</li>
+<li>Optional: Whether the argument is optional</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.RPCTypes">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">RPCTypes</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.RPCTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Available types of RPC calls
+see also the rpctypes variable</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.SensorArgs">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorArgs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Argument of a sensor, combination of a <tt class="xref py py-class docutils literal"><span class="pre">RPCArg</span></tt> and a <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a></p>
+<ul class="simple">
+<li>Sensor: The <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> for which the argument is</li>
+<li>RPCArg: The argument, of type <a class="reference internal" href="#domos.util.db.RPCArgs" title="domos.util.db.RPCArgs"><tt class="xref py py-class docutils literal"><span class="pre">RPCArgs</span></tt></a></li>
+<li>Value: The value of this argument</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.SensorFunctions">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorFunctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of Sensors used by expressions</p>
+<ul class="simple">
+<li>Sensor: which <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> to which...</li>
+<li>Match: <a class="reference internal" href="#domos.util.db.Match" title="domos.util.db.Match"><tt class="xref py py-class docutils literal"><span class="pre">Match</span></tt></a> using this sensor</li>
+<li>Function: Which function to use on the values of this sensor</li>
+<li>Args: Tuple of arguments for the sensor function</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.SensorValues">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">SensorValues</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.SensorValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Values of a sensor, represents a measurement value 
+of the sensor at a certain point in time</p>
+<ul class="simple">
+<li>Sensor: associated <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a></li>
+<li>Value: measurement value</li>
+<li>Timestamp: Point in time of the value</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Sensors">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Sensors</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Sensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sensor</p>
+<ul class="simple">
+<li>Module: <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> associated with the sensor</li>
+<li>Ident: identifier of the sensor</li>
+<li>Active: Whether the sensor is active or disabled</li>
+<li>Instant: is the sensor of the type Instant</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.TriggerFunctions">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerFunctions</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerFunctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of triggers used by expressions</p>
+<ul class="simple">
+<li>Trigger: which <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> to which...</li>
+<li>Match: <a class="reference internal" href="#domos.util.db.Match" title="domos.util.db.Match"><tt class="xref py py-class docutils literal"><span class="pre">Match</span></tt></a> using this sensor</li>
+<li>Function: Which function to use on the values of this sensor</li>
+<li>Args: Tuple of arguments for the sensor function</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.TriggerValues">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">TriggerValues</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.TriggerValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Values of triggers</p>
+<ul class="simple">
+<li>Trigger: <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> to which this value belongs</li>
+<li>Value: The actual value</li>
+<li>Timestamp: Time at which this value was calculated</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.Triggers">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">Triggers</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#domos.util.db.Triggers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Table with triggers</p>
+<ul class="simple">
+<li>Name: Name of the trigger</li>
+<li>Match: foreign, class:<cite>Match</cite> on which the trigger activates</li>
+<li>Record: Whether to log this trigger to the triggervalues table</li>
+<li>Lastvalue: Last calculated value of this trigger</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="domos.util.db.dbhandler">
+<em class="property">class </em><tt class="descclassname">domos.util.db.</tt><tt class="descname">dbhandler</tt><big>(</big><em>conf=None</em>, <em>database=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Database handler class</p>
+<dl class="function">
+<dt id="domos.util.db.dbhandler.addModule">
+<tt class="descname">addModule</tt><big>(</big><em>self</em>, <em>name</em>, <em>queue</em>, <em>active=True</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a module to the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; Name of the <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></li>
+<li><strong>queue</strong> &#8211; queue to use at the message broker</li>
+<li><strong>active</strong> &#8211; Initialize the module as activated or not</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The created <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.addRPC">
+<tt class="descname">addRPC</tt><big>(</big><em>self</em>, <em>module</em>, <em>key</em>, <em>rpctype</em>, <em>args</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addRPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an rpc command to the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>module</strong> &#8211; <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> object</li>
+<li><strong>key</strong> &#8211; name of the <a class="reference internal" href="#domos.util.db.ModuleRPC" title="domos.util.db.ModuleRPC"><tt class="xref py py-class docutils literal"><span class="pre">ModuleRPC</span></tt></a></li>
+<li><strong>rpctype</strong> &#8211; string of the type of the rpc</li>
+<li><strong>args</strong> &#8211; list of tuples, (name, type, optional, descr)</li>
+<li><strong>descr</strong> &#8211; description of the rpc request</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.addSensor">
+<tt class="descname">addSensor</tt><big>(</big><em>self</em>, <em>module</em>, <em>identifier</em>, <em>argdata</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addSensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a sensor to the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>module</strong> &#8211; The <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> to add the sensor to</li>
+<li><strong>identifier</strong> (<em>String</em>) &#8211; An human readable identifier, ie: temp_outside</li>
+<li><strong>argdata</strong> &#8211; list of dicts with name=value pairs</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.addTrigger">
+<tt class="descname">addTrigger</tt><big>(</big><em>self</em>, <em>name</em>, <em>trigger</em>, <em>sensorlist</em>, <em>descr=None</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTrigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a trigger to the database
+.. note:: Does not work yet</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.addTriggervalue">
+<tt class="descname">addTriggervalue</tt><big>(</big><em>self</em>, <em>trigger</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addTriggervalue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a value to the database for a trigger, It checks whether the trigger should record all values and takes the required action</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>trigger</strong> &#8211; A <a class="reference internal" href="#domos.util.db.Triggers" title="domos.util.db.Triggers"><tt class="xref py py-class docutils literal"><span class="pre">Triggers</span></tt></a> the value should be registered to</li>
+<li><strong>value</strong> &#8211; The value to register</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.addValue">
+<tt class="descname">addValue</tt><big>(</big><em>self</em>, <em>sensor_id</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.addValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a <tt class="xref py py-class docutils literal"><span class="pre">sensorValues</span></tt> to the database. 
+The timestamp is the time the record is added to the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sensor_id</strong> &#8211; The id of the <tt class="xref py py-class docutils literal"><span class="pre">Sensor</span></tt> to add, a <tt class="xref py py-class docutils literal"><span class="pre">Sensor</span></tt> object works too</li>
+<li><strong>value</strong> &#8211; The value to add</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.checkSensorTriggers">
+<tt class="descname">checkSensorTriggers</tt><big>(</big><em>self</em>, <em>sensor</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.checkSensorTriggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.close">
+<tt class="descname">close</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the connection to the database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.connect">
+<tt class="descname">connect</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a connection to the database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.create_tables">
+<tt class="descname">create_tables</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.create_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to create a set of empty tables, silently fails if the table already exists</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getActions">
+<tt class="descname">getActions</tt><big>(</big><em>self</em>, <em>action</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getActions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator of <a class="reference internal" href="#domos.util.db.ActionArgs" title="domos.util.db.ActionArgs"><tt class="xref py py-class docutils literal"><span class="pre">ActionArgs</span></tt></a>, all belonging to one 
+action
+Use it to get the arguments for an action. It not only returns the 
+<a class="reference internal" href="#domos.util.db.ActionArgs" title="domos.util.db.ActionArgs"><tt class="xref py py-class docutils literal"><span class="pre">ActionArgs</span></tt></a>, but also the corresponding <a class="reference internal" href="#domos.util.db.RPCArgs" title="domos.util.db.RPCArgs"><tt class="xref py py-class docutils literal"><span class="pre">RPCArgs</span></tt></a> objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>action</strong> &#8211; The <a class="reference internal" href="#domos.util.db.Actions" title="domos.util.db.Actions"><tt class="xref py py-class docutils literal"><span class="pre">Actions</span></tt></a> to get the arguments for</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">An iterator of <a class="reference internal" href="#domos.util.db.ActionArgs" title="domos.util.db.ActionArgs"><tt class="xref py py-class docutils literal"><span class="pre">ActionArgs</span></tt></a> with the <a class="reference internal" href="#domos.util.db.RPCArgs" title="domos.util.db.RPCArgs"><tt class="xref py py-class docutils literal"><span class="pre">RPCArgs</span></tt></a> joined</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getActionsfromtrigger">
+<tt class="descname">getActionsfromtrigger</tt><big>(</big><em>self</em>, <em>trigger_id</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getActionsfromtrigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getModule">
+<tt class="descname">getModule</tt><big>(</big><em>self</em>, <em>modulename</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query the database for a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> by name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>modulename</strong> &#8211; The name of the module to query for</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">A <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getModuleByID">
+<tt class="descname">getModuleByID</tt><big>(</big><em>self</em>, <em>moduleid</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModuleByID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query the database for a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> by id</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>moduleid</strong> &#8211; The ID of the module</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">A <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getModuleSensors">
+<tt class="descname">getModuleSensors</tt><big>(</big><em>self</em>, <em>module</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModuleSensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an iterator of <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> belonging to a <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a>
+The sensor.module is also returned from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>module</strong> &#8211; A <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">An iterator with <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getModules">
+<tt class="descname">getModules</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getModules" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns an iterator with Module objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">An one use iterator with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getRPCCall">
+<tt class="descname">getRPCCall</tt><big>(</big><em>self</em>, <em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCCall" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getRPCs">
+<tt class="descname">getRPCs</tt><big>(</big><em>self</em>, <em>module</em>, <em>type</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getRPCs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getSensorByIdent">
+<tt class="descname">getSensorByIdent</tt><big>(</big><em>self</em>, <em>ident</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getSensorByIdent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query the database for a <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> with the requested ident
+Throws an exception of peewee.DoesNotExist when the requested ident does not exist</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ident</strong> &#8211; The ident to query for</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">A <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> object with the requested ident</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getSensors">
+<tt class="descname">getSensors</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getSensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator with all <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a> from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">An iterator with <a class="reference internal" href="#domos.util.db.Sensors" title="domos.util.db.Sensors"><tt class="xref py py-class docutils literal"><span class="pre">Sensors</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.getdict">
+<tt class="descname">getdict</tt><big>(</big><em>self</em>, <em>kwarg</em>, <em>key</em>, <em>value</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.getdict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.init_tables">
+<tt class="descname">init_tables</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.init_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize any preconfigured content that is needed for initial 
+start up. Currently only the RPCTypes table is filled and needed;
+All <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> are configured as inactive</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.listModules">
+<tt class="descname">listModules</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.listModules" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a> objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">A list with <a class="reference internal" href="#domos.util.db.Module" title="domos.util.db.Module"><tt class="xref py py-class docutils literal"><span class="pre">Module</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="domos.util.db.dbhandler.updateOrAddModule">
+<tt class="descname">updateOrAddModule</tt><big>(</big><em>self</em>, <em>moduledata</em><big>)</big><a class="headerlink" href="#domos.util.db.dbhandler.updateOrAddModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a module if it doesn&#8217;t exist yet, update it if it does.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">not yet implemented</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="data">
+<dt id="domos.util.db.rpctypes">
+<tt class="descclassname">domos.util.db.</tt><tt class="descname">rpctypes</tt><em class="property"> = ['list', 'get', 'del', 'add', 'set']</em><a class="headerlink" href="#domos.util.db.rpctypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Peewee database models</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Domos&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Domos’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Domos 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Koen en Tim.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
