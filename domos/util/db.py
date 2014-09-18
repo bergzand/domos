@@ -23,15 +23,49 @@ class BaseModel(Model):
     def to_dict(self, **kwargs):
         print(self.__class__)
         if issubclass(self.__class__, BaseModel):
-            t = super(self.__class__, self).translations
+            ts = super(self.__class__, self).translations
         else:
-            t = []
-        print(t)
-        t += self.translations
+            ts = []
+        t = ts+self.translations
         print(t)
         d = {name: getattr(self, variable) for variable, name in t}
+        if 'deep' in kwargs:
+            for parameter in kwargs['deep']:
+                dd = kwargs['deep']
+                if(hasattr(self,parameter)):
+                    dd.remove(parameter)
+                    if type(getattr(self,parameter))is list:
+                        l=[i.to_dict(deep=dd) for i in getattr(self,parameter)]
+                    else:
+                        l =  getattr(self,parameter).to_dict()
+                    d.update({parameter:l})
         return d
-
+    
+    def from_dict(self,dict,**kwargs):
+        print(self.__class__)
+        if issubclass(self.__class__, BaseModel):
+            ts = super(self.__class__, self).translations
+        else:
+            ts = []
+        t = ts+self.translations
+        print(t)
+        for variable, name in t:
+            setattr(self,variable,dict[name]) 
+        if 'deep' in kwargs:
+            for parameter in kwargs['deep']:
+                dd = kwargs['deep']
+                if(hasattr(self,parameter)):
+                    print('deeping '+parameter)
+                    dd.remove(parameter)
+                    if type(getattr(self,parameter))is list:
+                        print('islist')
+                        setattr(self,parameter,[])
+                        for i in dict[parameter] :
+                             getattr(self,parameter).append(Sensor().from_dict(i,deep=dd))
+                    else:
+                        print('isvariable')
+                        getattr(self,parameter).from_dict(dict[parameter],deep=dd)
+        return self
 
 class Module(BaseModel):
     translations = [('name', 'name'),
