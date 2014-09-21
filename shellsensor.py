@@ -43,10 +43,10 @@ class dashiThread(Thread):
     def sendValue(self,value):
         if self.addaccepted:
             self.rpc.log_debug("sending: "+str(value))
-            self.rpc.fire("domoscore","sensorValue",data={'key':self.key,'ident':self.identifier,'value':value})
+            self.rpc.fire("domoscore","sensorValue", key=self.key, value=value)
     
-    def addshellinput(self,key=None,ident=None,prompt=">>"):
-        self.identifier = ident
+    def addshellinput(self,key=None,name=None,prompt=">>"):
+        self.identifier = name
         self.key        = key
         self.prompt     = prompt
         self.rpc.log_info("registered as:{id} with key: {key}".format(id=self.identifier,key=self.key))
@@ -54,7 +54,7 @@ class dashiThread(Thread):
         self.addaccepted = True;
         
     
-    def receive(self,key=None,ident=None,value=None,prefix="Received: "):
+    def receive(self,key=None,name=None,value=None,prefix="Received: "):
         print(prefix+str(value));
         print(str(self.prompt));
     

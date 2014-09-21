@@ -65,9 +65,10 @@ class messagehandler(threading.Thread):
         """
         returnvalue = False
         try:
-            module = self.db.getModule(data['name'])
+            module = Module.get_by_name(data['name'])
+            
         except DoesNotExist:
-            module = self.db.addModule(name=data['name'], queue=data['queue'])
+            module = Module.add(name=data['name'], queue=data['queue'])
             for rpc in data['rpc']:
                 argslist = []
                 if "args" in rpc:
@@ -76,23 +77,26 @@ class messagehandler(threading.Thread):
                                 arg['type'],
                                 arg.get('optional', False),
                                 arg.get('descr', None)) for arg in rpc['args']]
-                self.db.addRPC(module, rpc['key'], rpc['type'], argslist)
+                ModuleRPC.add(module, rpc['key'], rpc['type'], argslist)
         else:
             self.logger.debug("Sending sensors to module")
-            sensors = self.db.getModuleSensors(module)
-            return [self.db.getSensorDict(sensor) for sensor in sensors]
+            sensors = Sensor.get_by_module(module)
+            module.active = True
+            module.save()
+            #TODO fix
+            return [SensorArg.get_dict(sensor) for sensor in sensors]
 
     def addSensor(self, module_id=0, data=None, send=False):
         #add sensor to the database, if send is True, also send it to the module
         self.logger.info('adding sensor from module {0} with ident {1}'.format(module_id, data['ident']))
-        module = self.db.getModuleByID(module_id)
-        sensor = self.db.addSensor(module, data['ident'], data)
+        module = Module.get_by_id(module_id)
+        sensor = Sensor.add(module, data['ident'], data)
         self.logger.info('Sensor added')
         if send:
             self.sendSensor(module, sensor)
 
     def sendSensor(self, module, sensor):
-        rpccall = self.db.getRPCCall(module, 'add')
+        rpccall = ModuleRPC.get_by_module(module, 'add')[0]
         self.rpc.call(module.queue,
                       rpccall.Key,
                       **self.db.getSensorDict(sensor))
@@ -106,7 +110,7 @@ class messagehandler(threading.Thread):
 
         try:
             self.logger.debug('logging trigger value for {0} with value {1}'.format(key,value))
-            self.db.addValue(key, value)
+            Sensor.get_by_id(key).add_value(value)
         except Exception as e:
             self.logger.warn('Something went wrong registering trigger value for {0}: {1}'.format(key, e))
         else:

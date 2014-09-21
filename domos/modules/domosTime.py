@@ -72,7 +72,7 @@ class domosTime(Process):
         self.rpc.fire("log", 'log_debug', msg=msg, handle='DomosTime')
 
     def addJob(self, key=None, 
-               ident=None, jobtype='Once',
+               name=None, jobtype='Once',
                start=None, stop=None):
         returnvalue = False
         for job in self._items:
@@ -85,41 +85,41 @@ class domosTime(Process):
             if stop:
                 #True job
                 newjob['start'] = self._sched.add_job(self._jobTrue,
-                                                      args=[key, ident],
+                                                      args=[key, name],
                                                       trigger='cron',
-                                                      name=ident,
+                                                      name=name,
                                                       **start)
                 #false job
                 newjob['stop'] = self._sched.add_job(self._jobFalse,
-                                                     args=[key, ident],
+                                                     args=[key, name],
                                                      trigger='cron',
-                                                     name=ident,
+                                                     name=name,
                                                      **stop)
-                newjob['ident'] = ident
+                newjob['name'] = name
                 newjob['key'] = key
                 newjob['type'] = jobtype
                 returnvalue = True
             else:
                 newjob['start'] = self._sched.add_job(self._jobOnce,
-                                                      args=[key, ident],
+                                                      args=[key, name],
                                                       trigger='cron',
-                                                      name=ident,
+                                                      name=name,
                                                       **start)
                 newjob['stop'] = None
-                newjob['ident'] = ident
+                newjob['name'] = name
                 newjob['key'] = key
                 newjob['type'] = jobtype
                 returnvalue = True
             self._items.append(newjob)
         return returnvalue
 
-    def _jobTrue(self, key, ident):
+    def _jobTrue(self, key, name):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
-    def _jobFalse(self, key, ident):
+    def _jobFalse(self, key, name):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='0')
 
-    def _jobOnce(self, key, ident):
+    def _jobOnce(self, key, name):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
     def getJobs(self):
@@ -136,7 +136,7 @@ class domosTime(Process):
                     one['stop'][field.name] = str(field)
             else:
                 one['stop'] = None
-            one['ident'] = job['ident']
+            one['name'] = job['name']
             one['type'] = job['type']
             one['key'] = job['key']
             jobs.append(one)
@@ -151,7 +151,7 @@ class domosTime(Process):
                     self._sched.unschedule_job(job['stop'])
                 self._items.remove(job)
 
-    def getJob(self, key=None, ident=None):
+    def getJob(self, key=None, name=None):
         self.rpc.log_debug("one job requested")
         one = None
         for job in self._items:
@@ -163,7 +163,7 @@ class domosTime(Process):
                 one['stop'] = dict()
                 for field in job['stop'].trigger.fields:
                     one['stop'][field.name] = str(field)
-                one['ident'] = job['ident']
+                one['name'] = job['name']
                 one['type'] = job['type']
                 one['key'] = job['key']
         return one
