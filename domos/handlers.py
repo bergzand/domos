@@ -6,7 +6,7 @@ import domos.util.domossettings as ds
 from domos.util.domossettings import domosSettings
 from domos.util.db import *
 import peewee
-import pprint
+from pprint import pprint
 import logging
 
 GRAMMAR = """
@@ -90,13 +90,13 @@ class triggerChecker(threading.Thread):
         Checks a single trigger
         """
         type, id, value = item
-        match = trigger.Match
+        match = trigger.expression
         #TODO: add function dict
         triggervalue = self.calculator.resolve(match, item)
-        print("New:",triggervalue,"old:",trigger.Lastvalue)
-        if trigger.Lastvalue != triggervalue:
+        print("New:",triggervalue,"old:",trigger.lastvalue)
+        if trigger.lastvalue != triggervalue:
             self.logger.debug("Trigger {0} now has value {1}".format(trigger.id, triggervalue))
-            self.db.addTriggervalue(trigger, triggervalue)
+            trigger.add_value(triggervalue)
             self.q.put(("trigger", trigger.id, triggervalue))
             if self.actionqueue:
                 self.actionqueue.put(("trigger", trigger.id, triggervalue))
@@ -110,9 +110,9 @@ class triggerChecker(threading.Thread):
         type, id, value = item
         self.logger.debug("Receiving item message")
         if type == "sensor":
-            triggers = self.db.gettriggersfromsensor(id)
+            triggers = Trigger.get_affected_by_sensor(id)
         elif type == "trigger":
-            triggers = self.db.gettriggersfromtrigger(id)
+            triggers = Trigger.get_affected_by_trigger(id)
         for trigger in triggers:
             self._checktrigger(trigger, item)
 
@@ -160,36 +160,29 @@ class actionhandler(threading.Thread):
         return self.q
         
     def _callaction(self, action):
-        actionargs = self.db.getActions(action)
-        kwargs = {}
-        for actionarg in actionargs:
-            value = self.calculator.resolve(actionarg.Value)
-            rpcarg = actionarg.RPCArg
-            key, value = self.db.getdict(kwargs, rpcarg.name, value)
-            kwargs[key] = value
-        kwargs['key'] = action.id
-        kwargs['ident'] = action.ident
-        module = action.Module
+        args = ActionArg.get_dict(action, self.calculator)
+        pprint(args)
+        module = action.module
         self.rpc.fire(module.queue,
-                      self.db.getRPCCall(module, 'set').Key,
-                      **kwargs)
+                      ModuleRPC.get_by_module(module, type='set')[0].key,
+                      **args)
 
     def processitem(self, item):
         #get all actions attached
         type, trigger, value = item
-        actions = self.db.getActionsfromtrigger(trigger)
-        self.logger.debug("Found {} action with trigger".format(len(actions)))
+        actions = TriggerAction.get_by_trigger(trigger)
+        #self.logger.debug("Found action with trigger".format(len(actions)))
         for action in actions:
             #check if action is activated
-            active = self.calculator.resolve(action.Match, item)
+            active = self.calculator.resolve(action.expression, item)
             #TODO: supply variables for transform
             try:
                 active = float(active)
             except:
                 self.logger.debug("Parsing action activation condition as string")
             if active:
-                self.logger.info("Calling action {}".format(action.Action.ident))
-                self._callaction(action.Action)
+                self.logger.info("Calling action {}".format(action.action.name))
+                self._callaction(action.action)
                 
 
     def run(self):
@@ -203,7 +196,7 @@ class actionhandler(threading.Thread):
 
 class matchcalculator:
     '''
-    Class to resolve match objects from the database. resolves a match record to a value.
+    Class to resolve expression objects from the database. resolves a expression record to a value.
     '''
     grammarobj = None
 
@@ -217,13 +210,13 @@ class matchcalculator:
         if (not matchcalculator.grammarobj) and grammar:
             matchcalculator.grammarobj = Grammar(GRAMMAR)
 
-    def _fetchvars(self, match, updateditem=None):
+    def _fetchvars(self, expression, updateditem=None):
         if updateditem:
             type, id, value = updateditem
-        sensorfuncs = self.db.getsensorfunctions(match)
+        sensorfuncs = expression.get_used_sensors()
         sensorvars = {}
         for func in sensorfuncs:
-            if updateditem and (func.Sensor.id == id):
+            if updateditem and (func.source.id == id):
                 str(value)
                 try:
                     value = float(value)
@@ -231,17 +224,17 @@ class matchcalculator:
                     pass
                 sensorvars[str(func.id)] = value
             else:
-                dictval = sensorops.operation(func)
+                dictval = ops.operation(func)
                 try:
                     dictval = float(dictval)
                 except:
                     pass
                 sensorvars[str(func.id)] = dictval 
-        triggerfuncs = [func for func in self.db.gettriggerfunctions(match)]
+        triggerfuncs = [func for func in expression.get_used_triggers()]
         #TODO: add function dict
 
         def _convtriggervar(func):
-            value = triggerops.operation(func)
+            value = ops.operation(func)
             try:
                 value = float(value)
             except:
@@ -252,14 +245,14 @@ class matchcalculator:
                                 for func in triggerfuncs}
         return (sensorvars, triggervars)
 
-    def resolve(self, match, updateditem=None):
+    def resolve(self, expression, updateditem=None):
         '''
         resolves a match database object to a value.
          - match: the match object to resolve
          - updateditem: the sensor that triggered the trigger. needed when the sensor is a oneshot sensor.
         '''
-        sensvars, trigvars = self._fetchvars(match, updateditem)
-        tree = self.grammarobj.parse(match.Matchstring)
+        sensvars, trigvars = self._fetchvars(expression, updateditem)
+        tree = self.grammarobj.parse(expression.expression)
         return Calc().transform(tree, sensvars, trigvars)
 
 

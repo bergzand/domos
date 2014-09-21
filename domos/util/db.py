@@ -86,13 +86,13 @@ class ModuleRPC(BaseModel):
 
         rpcrecord = RPCType.get(RPCType.rpctype == rpctype)
         with dbconn.transaction():
-            newrpc = ModuleRPC.create(Module=module, Key=key, RPCType=rpcrecord)
+            newrpc = ModuleRPC.create(module=module, key=key, rpctype=rpcrecord)
             if args:
                 argdict = [{'name': name,
-                            'RPCargtype': rpctype,
-                            'Optional': opt,
+                            'rpcargtype': rpctype,
+                            'optional': opt,
                             'desc': desc,
-                            'ModuleRPC': newrpc}for name, rpctype, opt, decr in args]
+                            'modulerpc': newrpc}for name, rpctype, opt, decr in args]
                 RPCArg.insert_many(argdict).execute()
 
     @classmethod
@@ -106,9 +106,9 @@ class ModuleRPC(BaseModel):
         """
         rtrn = None
         if type:
-            rtrn = ModuleRPC.select(ModuleRPC).join(RPCType).where((ModuleRPC.Module == module) & (RPCType.rpctype == type))
+            rtrn = cls.select(cls).join(RPCType).where((cls.module == module) & (RPCType.rpctype == type))
         else:
-            rtrn = ModuleRPC.select(ModuleRPC).join(RPCType).where((ModuleRPC.Module == module) & (RPCType.rpctype == type))
+            rtrn = cls.select(cls).join(RPCType).where((cls.module == module) & (RPCType.rpctype == type))
         return rtrn
 
 
@@ -149,13 +149,13 @@ class Sensor(BaseModel):
         """
         sensor = Sensor()
         sensor.name = name
-        sensor.Module = module
+        sensor.module = module
         sensor.save()
         rpcargs = RPCArg.get_by_type(module, type)
         queryargs = []
         for rpcarg in rpcargs:
             if rpcarg.name in argdata:
-                arg = {'Sensor': sensor, 'RPCArg': rpcarg, 'Value': argdata[rpcarg.name]}
+                arg = {'sensor': sensor, 'rpcarg': rpcarg, 'value': argdata[rpcarg.name]}
                 queryargs.append(arg)
                 #TODO: missing key exceptions and handling
         q = SensorArg.insert_many(queryargs).execute()
@@ -163,7 +163,7 @@ class Sensor(BaseModel):
 
     @classmethod
     def get_by_module(cls, module):
-        return Sensor.select(Sensor, Module).join(Module).where(Sensor.Module == module)
+        return Sensor.select(Sensor, Module).join(Module).where(Sensor.module == module)
 
     @classmethod
     def get_by_name(cls, name):
@@ -171,6 +171,12 @@ class Sensor(BaseModel):
 
     def add_value(self, value):
         value = SensorValue.create(sensor=self, value=str(value))
+
+    def lastrecords(self, num):
+        if self.instant:
+            return []
+        else:
+            return SensorValue.select().where(SensorValue.sensor == self).order_by(SensorValue.timestamp.desc()).limit(num).naive()
 
 
 class SensorValue(BaseModel):
@@ -180,6 +186,8 @@ class SensorValue(BaseModel):
     sensor = ForeignKeyField(Sensor, related_name='values', on_delete='CASCADE')
     value = CharField()
     timestamp = DateTimeField(default=datetime.datetime.now)
+
+
 
     class meta:
         order_by = ('-Timestamp',)
@@ -194,6 +202,32 @@ class SensorArg(BaseModel):
     rpcarg = ForeignKeyField(RPCArg)
     value = CharField()
 
+    @staticmethod
+    def _to_dict(kwarg, key, value):
+        if len(key.split('.', 1)) > 1:
+            start, end = key.split('.', 1)
+            if start not in kwarg:
+                kwarg[start] = {}
+            key, value = SensorArg._to_dict(kwarg[start], end, value)
+            kwarg[start][key] = value
+            print(kwarg)
+            return start, kwarg[start]
+        else:
+            return key, value
+
+    @staticmethod
+    def get_dict(sensor):
+        sensorargs = SensorArg.select().where(SensorArg.sensor == sensor)
+        kwargs = {}
+        for sensorarg in sensorargs:
+            value = sensorarg.value
+            rpcarg = sensorarg.rpcarg
+            key, value = SensorArg._to_dict(kwargs, rpcarg.name, value)
+            kwargs[key] = value
+        kwargs['key'] = sensor.id
+        kwargs['name'] = sensor.name
+        return kwargs
+
 
 class Macro(BaseModel):
     translations = [('name', 'name'), ('value', 'value')]
@@ -207,10 +241,10 @@ class Expression(BaseModel):
     pickled = BlobField(null=True)
 
     def get_used_sensors(self):
-        return VarSensor.select(VarSensor, Sensor).join(Sensor).where(VarSensor == self)
+        return VarSensor.select(VarSensor, Sensor).join(Sensor).where(VarSensor.expression == self)
 
     def get_used_triggers(self):
-        return VarTrigger.select(VarTrigger, Trigger).join(VarTrigger).where(VarTrigger.expression == self)
+        return VarTrigger.select(VarTrigger, Trigger).join(Trigger).where(VarTrigger.expression == self)
 
 
 class Trigger(BaseModel):
@@ -226,9 +260,22 @@ class Trigger(BaseModel):
         return Trigger.select(Trigger, Expression).join(Expression)\
             .join(VarTrigger)\
             .where(
-                (VarTrigger.trigger == self) &
+                (VarTrigger.source == self) &
                 (Trigger != self)
                 )
+
+    @classmethod
+    def get_affected_by_trigger(cls, trigger_id):
+        return Trigger.select(Trigger, Expression).join(Expression)\
+            .join(VarTrigger)\
+            .where(
+                (VarTrigger.source == trigger_id) &
+                (Trigger.id != trigger_id)
+                )
+
+    @classmethod
+    def get_affected_by_sensor(cls, sensor_id):
+        return Trigger.select(Trigger, Expression).join(Expression).join(VarSensor, JOIN_INNER).where(VarSensor.source == sensor_id).iterator()
 
     def add_value(self, value):
         self.lastvalue = value
@@ -236,7 +283,16 @@ class Trigger(BaseModel):
         if self.record:
             value = TriggerValue.create(trigger=self, value=value)
 
-
+    def lastrecords(self, num):
+        rtn = 0
+        if self.lastvalue:
+            if self.record:
+                rtn = TriggerValue.select().where(TriggerValue.trigger == self).order_by(TriggerValue.timestamp.desc()).limit(num).naive()
+            else:
+                rtn = self.lastvalue
+        return rtn
+            
+        
 class TriggerValue(BaseModel):
     translations = [('value', 'value'),
                     ('timestamp', 'timestamp')]
@@ -254,7 +310,7 @@ class TriggerValue(BaseModel):
 class VarSensor(BaseModel):
     translations = [('function', 'function'),
                     ('args', 'args')]
-    sensor = ForeignKeyField(Sensor, related_name='functions')
+    source = ForeignKeyField(Sensor, related_name='functions')
     expression = ForeignKeyField(Expression)
     function = CharField()
     args = CharField()
@@ -263,7 +319,7 @@ class VarSensor(BaseModel):
 class VarTrigger(BaseModel):
     translations = [('function', 'function'),
                     ('args', 'args')]
-    trigger = ForeignKeyField(Trigger, related_name='functions')
+    source = ForeignKeyField(Trigger, related_name='functions')
     expression = ForeignKeyField(Expression)
     function = CharField()
     args = CharField()
@@ -280,12 +336,39 @@ class ActionArg(BaseModel):
     rpcarg = ForeignKeyField(RPCArg)
     value = ForeignKeyField(Expression)
 
+    @staticmethod
+    def _to_dict(kwarg, key, value):
+        if len(key.split('.', 1)) > 1:
+            start, end = key.split('.', 1)
+            if start not in kwarg:
+                kwarg[start] = {}
+            key, value = SensorArg._to_dict(kwarg[start], end, value)
+            kwarg[start][key] = value
+            print(kwarg)
+            return start, kwarg[start]
+        else:
+            return key, value
+
+    @classmethod
+    def get_dict(cls, action, calculator):
+        actionargs = cls.select().where(cls.action == action)
+        kwargs = {}
+        for act in actionargs:
+            value = calculator.resolve(act.value)
+            rpcarg = act.rpcarg
+            key, value = cls._to_dict(kwargs, rpcarg.name, value)
+            kwargs[key] = value
+        return kwargs
 
 class TriggerAction(BaseModel):
     #mapping of triggers and actions
     action = ForeignKeyField(Action, related_name='triggers')
     trigger = ForeignKeyField(Trigger, related_name='actions')
     expression = ForeignKeyField(Expression)
+    
+    @classmethod
+    def get_by_trigger(cls, trigger):
+        return cls.select(cls, Action).join(Action).where(cls.trigger == trigger)
 
 
 class dbhandler:
@@ -349,7 +432,7 @@ class dbhandler:
                 newtype = RPCType()
                 newtype.rpctype = type
                 newtype.save()
-        q = Module.update(Active=False)
+        q = Module.update(active=False)
         q.execute()
 
     def connect(self):
@@ -362,86 +445,40 @@ class dbhandler:
         self.connected = False
         return conn
 
-    def getdict(self, kwarg, key, value):
-        if len(key.split('.', 1)) > 1:
-            start, end = key.split('.', 1)
-            if start not in kwarg:
-                kwarg[start] = {}
-            key, value = self.getdict(kwarg[start], end, value)
-            kwarg[start][key] = value
-            print(kwarg)
-            return start, kwarg[start]
-        else:
-            return key, value
-
-    
-    def getSensorDict(self, sensor):
-        sensorargs = SensorArgs.select().where(SensorArgs.Sensor == sensor)
-        kwargs = {}
-        for sensorarg in sensorargs:
-            value = sensorarg.Value
-            rpcarg = sensorarg.RPCArg
-            key, value = self.getdict(kwargs, rpcarg.name, value)
-            kwargs[key] = value
-        kwargs['key'] = sensor.id
-        kwargs['name'] = sensor.name
-        return kwargs
-
-    def getActions(self, action):
-        actionargs = ActionArgs.select(ActionArgs, RPCArgs).join(RPCArgs).where(ActionArgs.Action == action)
-        return actionargs
-
-    def gettriggersfromsensor(self, sensor_id):
-        funcs = Triggers.select(Triggers, Match).join(Match).join(SensorFunctions, JOIN_INNER).where(SensorFunctions.Sensor == sensor_id).iterator()
-        return [data for data in funcs]
-
-
-    def getActionsfromtrigger(self, trigger_id):
-        actions = ActionsForTrigger.select(ActionsForTrigger, Actions).join(Actions).where(ActionsForTrigger.Trigger == trigger_id)
-        return [action for action in actions]
-
-
-class sensorops:
+class ops:
     
     @staticmethod
-    def operation(sensorfunction):
+    def operation(function):
         op = {
-        'last': sensorops.last,
-        'avg': sensorops.avg,
-        'sum': sensorops.sumation,
-        'diff': sensorops.diff,
-        'tdiff': sensorops.tdiff,
-        }[sensorfunction.Function]
+        'last': ops.last,
+        'avg': ops.avg,
+        'sum': ops.sumation,
+        'diff': ops.diff,
+        'tdiff': ops.tdiff,
+        }[function.function]
         print('looking up value with')
-        return op(sensorfunction.Sensor, sensorfunction.Args)
-
+        return op(function.source, function.args)
+    
     @staticmethod
-    def _lastrecords(sensor, num):
-        if sensor.Instant:
-            return []
-        else:
-            return SensorValues.select().where(SensorValues.Sensor == sensor).order_by(SensorValues.Timestamp.desc()).limit(num).naive()
-
-    @staticmethod
-    def last(sensor, num):
-        last = sensorops._lastrecords(sensor, int(num))
+    def last(source, num):
+        last = source.lastrecords(int(num))
         if last:
-            return last.select().offset(num).dicts().get()['Value']
+            return last.select().offset(num).dicts().get()['value']
         else:
             return 0
 
     @staticmethod
-    def sumation(sensor, num):
-        selection = sensorops._lastrecords(sensor, num)
-        if last:
+    def sumation(source, num):
+        selection = source.lastrecords(int(num))
+        if selection:
             result = math.fsum((int(i.Value) for i in selection))
             return result
         else:
             return 0
 
     @staticmethod
-    def avg(sensor, num):
-        selection = sensorops._lastrecords(sensor, num)
+    def avg(source, num):
+        selection = source.lastrecords(int(num))
         if last:
             result = statistics.mean((int(i.Value) for i in selection))
             return result
@@ -449,54 +486,29 @@ class sensorops:
             return 0
 
     @staticmethod
-    def diff(sensor, args):
-        selection = sensorops._lastrecords(sensor, 2)
+    def diff(source, args):
+        selection = source.lastrecords(2)
         if selection:
             try:
                 result1 = float(selection[0].Value)
                 result2 = float(selection[1].Value)
             except:
-                raise sensorerror(sensor, 'could not convert values to floating point numbers')
+                raise sensorerror(source, 'could not convert values to floating point numbers')
             result = result1 - result2
         else:
             result = 0
         return result
 
-    def tdiff(sensor, args):
-        selection = sensorops._lastrecords(sensor, 2)
+    def tdiff(source, args):
+        selection = source.lastrecords(2)
         if selection:
             result1 = selection[0]
             result2 = selection[1]
             print(type(result1.Timestamp))
-            result = (int(result1.Value) - int(result2.Value))/(result1.Timestamp - result2.Timestamp).total_seconds()
+            result = (int(result1.value) - int(result2.value))/(result1.timestamp - result2.timestamp).total_seconds()
         else:
             result = 0
         return result
-
-class triggerops:
-
-    @staticmethod
-    def operation(triggerfunction):
-        op = {'last': triggerops.last,
-              #'avg':  triggerops.avg,
-              #'sum': triggerops.sumation,
-              #'diff': triggerops.diff,
-              #'tdiff': triggerops.tdiff,
-              }[triggerfunction.Function]
-        print('looking up value with')
-        return op(triggerfunction.Trigger, triggerfunction.Args)
-
-    @staticmethod
-    def _lastrecords(trigger, num):
-        return TriggerValues.select().where(TriggerValues.Trigger == trigger).order_by(TriggerValues.Timestamp.desc()).limit(num).naive()
-
-    @staticmethod
-    def last(trigger, num):
-        last = triggerops._lastrecords(trigger, int(num))
-        if last:
-            return last.select().offset(num).dicts().get()['Value']
-        else:
-            return 0
     
 
 class sensorerror(Exception):                                    
