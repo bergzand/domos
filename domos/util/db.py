@@ -8,9 +8,12 @@ dbconn = Proxy()
 
 rpctypes = ['list', 'get', 'del', 'add', 'set']
 
+#Peewee database models
+
 
 class BaseModel(Model):
-
+    """Base model of the database, provides default settings
+    """
     translations = [('id', 'id')]
 
     class Meta:
@@ -18,6 +21,9 @@ class BaseModel(Model):
 
     @classmethod
     def get_by_id(cls, num):
+        """Returns the object with the specified database ID
+        :param num: The ID of the object
+        """
         return cls.get(cls.id == num)
 
     def to_dict(self, **kwargs):
@@ -34,6 +40,12 @@ class BaseModel(Model):
 
 
 class Module(BaseModel):
+    """Model of a module
+
+    * Name: Name of the module
+    * queue: message queue the module is listening on
+    * Active: whether the module is active or not
+    """
     translations = [('name', 'name'),
                     ('queue', 'q'),
                     ('active', 'active'),
@@ -45,19 +57,34 @@ class Module(BaseModel):
 
     @classmethod
     def add(cls, name, queue, active=True):
+        """Add a module to the database
+
+        :param name: The name of the module
+        :param queue: The message queue to reach the module on
+        :param active: Set the module as active or inactive
+        """
         return cls.create(name=name, queue=queue, Active=active)
 
     @classmethod
     def list(cls):
-        #returns a list of modules
-        return [module for module in cls.getModules()]
+        """returns a list of modules
+        """
+        return [module for module in module.select()]
 
     @classmethod
     def get_by_name(cls, name):
+        """Returns the :class:`Module` object with the specified name. throws an peewee.DoesNotExist exception if the module does not exist.
+
+        :param name: The name of the :class:`Module`
+        :rtype: A :class:`Module` object.
+        """
         return cls.get(Module.name == name)
 
 
 class RPCType(BaseModel):
+    """Available types of RPC calls
+    see also the rpctypes variable
+    """
     translations = [('rpctype', 'rpctype'),
                     ('desc', 'des')]
     rpctype = CharField()
@@ -65,6 +92,12 @@ class RPCType(BaseModel):
 
 
 class ModuleRPC(BaseModel):
+    """RPC a :class:`Module` supports. 
+
+    * Module: foreign key to a :class:`Module`
+    * RPCType: foreign, the type of :class:`RPCType`
+    * key: Key to distiguish multiple rpc's of the same type
+    """
     translations = [('key', 'key'),
                     ('desc', 'des')]
     module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
@@ -74,14 +107,13 @@ class ModuleRPC(BaseModel):
 
     @classmethod
     def add(cls, module, key, rpctype, args, desc=None):
-        """
-            Adds an rpc command to the database
+        """ Adds an rpc command to the database
 
             :param module: module object
             :param key: name of the rpc
             :param rpctype: string of the type of the rpc
-            :param args: list of tuples, (name, type, optional, descr)
-            :param descr: description of the rpc request
+            :param args: list of tuples, (name, type, optional, desc)
+            :param desc: description of the rpc request
         """
 
         rpcrecord = RPCType.get(RPCType.rpctype == rpctype)
@@ -97,12 +129,11 @@ class ModuleRPC(BaseModel):
 
     @classmethod
     def get_by_module(cls, module, type=None):
-        """
-            Retrieve RPC's associated with a module
-
-            :param module: :class`Module` to retrieve remote procedures for
-            :param type: type of rpc to return
-            :rtype Iterator with remote procedures
+        """ Retrieve RPC's associated with a module
+        
+        :param module: :class`Module` to retrieve remote procedures for
+        :param type: type of rpc to return
+        :rtype: Iterator with remote procedures
         """
         rtrn = None
         if type:
@@ -113,6 +144,14 @@ class ModuleRPC(BaseModel):
 
 
 class RPCArg(BaseModel):
+    """Arguments for a RPC
+
+    * modulerpc: foreign key to a :class:`ModuleRPC`
+    * name: Name of the argument, used in the dictionary send to the module
+    * rpcargtype: Type of argument, eg: string, integer
+    * optional: Whether the argument is optional
+    * desc: description of this argument
+    """
     translations = [('name', 'name'),
                     ('rpcargtype', 'rpcargtype'),
                     ('optional', 'optional'),
@@ -125,11 +164,21 @@ class RPCArg(BaseModel):
 
     @classmethod
     def get_by_type(cls, module, type):
+        """Query the database for remote procedure arguments of the specified module and of a specified type
+           
+        """
         return RPCArg.select().join(ModuleRPC).join(RPCType).where((ModuleRPC.Module == module) &
                                                                    (RPCType.rpctype == 'add'))
 
 
 class Sensor(BaseModel):
+    """Sensor to measure
+    
+    * module: :class:`Module` associated with the sensor
+    * ident: identifier of the sensor
+    * active: Whether the sensor is active or disabled
+    * instant: is the sensor of the type Instant
+    """
     translations = [('name', 'name'),
                     ('active', 'active'),
                     ('instant', 'instant'),
@@ -142,10 +191,11 @@ class Sensor(BaseModel):
 
     @classmethod
     def add(cls, module, name, argdata):
-        """
-            Add a sensor to the database
+        """Add a sensor to the database
 
-            :param argdata: list of dicts with name=value pairs
+        :param module: The :class:`Module` to add the sensor to
+        :param name: An human readable identifier, ie: temp_outside
+        :param argdata: list of dicts with name=value pairs
         """
         sensor = Sensor()
         sensor.name = name
@@ -163,16 +213,38 @@ class Sensor(BaseModel):
 
     @classmethod
     def get_by_module(cls, module):
+        """Return all sensors of the specified :class:`module`
+        
+        :param module: The :class:`Module` object or ID to
+        :rtype: An iterator with :class:`Sensor` classes
+        """
         return Sensor.select(Sensor, Module).join(Module).where(Sensor.module == module)
 
     @classmethod
     def get_by_name(cls, name):
+        """Query the database for a :class:`Sensor` with the specified name.
+        .. note::
+
+            This returns only the first :class:`Sensor` with this name
+
+        :param name: The name to query for
+        :rtype: A :class:`Sensor` class
+        """
         return Sensor.get(Sensor.name == name)
 
     def add_value(self, value):
+        """add a :class:`SensorValue` to the database for this :class:`Sensor`
+        
+        :param value: The value to add to the database
+        """
         value = SensorValue.create(sensor=self, value=str(value))
 
     def lastrecords(self, num):
+        """Returns a list of the last values of this sensor
+        
+        :param num: Amount of :class:`SensorValue` to return
+        :rtype: an iterator over the values
+        """
         if self.instant:
             return []
         else:
@@ -180,13 +252,19 @@ class Sensor(BaseModel):
 
 
 class SensorValue(BaseModel):
+    """Values of a sensor, represents a measurement value
+    of the sensor at a certain point in time
+
+    * sensor: associated :class:`Sensor`
+    * value: measurement value
+    * timestamp: Point in time of the value
+    """
     translations = [('value', 'value'),
                     ('timestamp', 'timestamp'),
                     ('descr', 'des')]
     sensor = ForeignKeyField(Sensor, related_name='values', on_delete='CASCADE')
     value = CharField()
     timestamp = DateTimeField(default=datetime.datetime.now)
-
 
     class meta:
         order_by = ('-Timestamp',)
@@ -196,6 +274,12 @@ class SensorValue(BaseModel):
 
 
 class SensorArg(BaseModel):
+    """Argument of a sensor, combination of a :class:`RPCArg` and a :class:`Sensor`
+
+    * sensor: The :class:`Sensor` for which the argument is
+    * rpcarg: The argument, of type :class:`RPCArg`
+    * value: The value of this argument
+    """
     translations = [('value', 'value')]
     sensor = ForeignKeyField(Sensor, related_name='args', on_delete='CASCADE')
     rpcarg = ForeignKeyField(RPCArg)
@@ -216,6 +300,14 @@ class SensorArg(BaseModel):
 
     @staticmethod
     def get_dict(sensor):
+        """This function creates a dict from the arguments of a :class:`sensor`
+        .. note::
+
+            A argument get separated by dots. ie: start.year becomes: {'start':{'year': value}}
+
+        :param sensor: The sensor to retrieve the argument dictionary for
+        :rtype: A dict with argument keys and values
+        """
         sensorargs = SensorArg.select().where(SensorArg.sensor == sensor)
         kwargs = {}
         for sensorarg in sensorargs:
@@ -229,12 +321,19 @@ class SensorArg(BaseModel):
 
 
 class Macro(BaseModel):
+    """Macro table, nothing more that key-value pairs for use in :class:`Expression` as constants
+    """
     translations = [('name', 'name'), ('value', 'value')]
     name = CharField()
     value = CharField()
 
 
 class Expression(BaseModel):
+    """Table that contains expressions used by other tables
+
+    * expression: String containing the expression
+    * pickled: binary blob containing the pickled AST of the expression
+    """
     translations = [('expression', 'expression')]
     expression = CharField()
     pickled = BlobField(null=True)
@@ -247,6 +346,13 @@ class Expression(BaseModel):
 
 
 class Trigger(BaseModel):
+    """Table with triggers
+
+    * name: Name of the trigger
+    * expression: foreign, class:`Expression` on which the trigger activates
+    * record: Whether to log this trigger to the triggervalues table
+    * lastvalue: Last calculated value of this trigger
+    """
     translations = [('name', 'name'),
                     ('record', 'record'),
                     ('lastvalue', 'lastvalue')]
@@ -256,6 +362,13 @@ class Trigger(BaseModel):
     lastvalue = CharField(null=True, default="null")
 
     def get_affected_triggers(self):
+        """Returns all triggers that have this trigger in their :class:`Expression`
+        .. note::
+
+            This function will never return itself as trigger result
+        
+        :rtype: an iterator with :class:`Trigger` classes
+        """
         return Trigger.select(Trigger, Expression).join(Expression)\
             .join(VarTrigger)\
             .where(
@@ -264,19 +377,37 @@ class Trigger(BaseModel):
                 )
 
     @classmethod
-    def get_affected_by_trigger(cls, trigger_id):
+    def get_affected_by_trigger(cls, trigger):
+        """Returns all :class:`Trigger` affected by the specified trigger.
+        
+        .. note::
+            
+            This function will never return the specified trigger in its results
+        
+        :param trigger: The :class:`Trigger` to query for
+        :rtype: an iterator with affected :class:`Trigger`
+        """
         return Trigger.select(Trigger, Expression).join(Expression)\
             .join(VarTrigger)\
             .where(
-                (VarTrigger.source == trigger_id) &
-                (Trigger.id != trigger_id)
+                (VarTrigger.source == trigger) &
+                (Trigger.id != trigger)
                 )
 
     @classmethod
-    def get_affected_by_sensor(cls, sensor_id):
-        return Trigger.select(Trigger, Expression).join(Expression).join(VarSensor, JOIN_INNER).where(VarSensor.source == sensor_id).iterator()
+    def get_affected_by_sensor(cls, sensor):
+        """Returns all :class:`Trigger` affected by the specified :class:`Sensor`.
+        
+        :param sensor: The sensor to query for
+        :rtype: an iterator of affected :class:`Trigger` classes
+        """
+        return Trigger.select(Trigger, Expression).join(Expression).join(VarSensor, JOIN_INNER).where(VarSensor.source == sensor)
 
     def add_value(self, value):
+        """Add a value to the trigger
+
+        :param value: The value to add to this :class:`Trigger`
+        """
         self.lastvalue = value
         self.save()
         if self.record:
@@ -293,6 +424,12 @@ class Trigger(BaseModel):
             
         
 class TriggerValue(BaseModel):
+    """values of triggers
+    
+    * trigger: :class:`Trigger` to which this value belongs
+    * value: The actual value
+    * timestamp: Time at which this value was calculated
+    """
     translations = [('value', 'value'),
                     ('timestamp', 'timestamp')]
     trigger = ForeignKeyField(Trigger, related_name='values', on_delete='CASCADE')
@@ -307,6 +444,13 @@ class TriggerValue(BaseModel):
 
 
 class VarSensor(BaseModel):
+    """Mapping of :class:`Sensor` used by :class:`Expression`
+    
+    * source: which :class:`Sensor` to which...
+    * expression: :class:`Expression` using this sensor
+    * function: Which function to use on the values of this sensor
+    * args: Tuple of arguments for the sensor function
+    """
     translations = [('function', 'function'),
                     ('args', 'args')]
     source = ForeignKeyField(Sensor, related_name='functions')
@@ -316,6 +460,13 @@ class VarSensor(BaseModel):
 
 
 class VarTrigger(BaseModel):
+    """Mapping of :class:`Trigger` used by :class:`Expression`
+    
+    * source: which :class:`Trigger` to which...
+    * expression: :class:`Expression` using this trigger
+    * function: Which function to use on the values of this sensor
+    * args: Tuple of arguments for the sensor function
+    """
     translations = [('function', 'function'),
                     ('args', 'args')]
     source = ForeignKeyField(Trigger, related_name='functions')
@@ -325,12 +476,21 @@ class VarTrigger(BaseModel):
 
 
 class Action(BaseModel):
+    """Actions to send to a module
+    module: The :class:`Module` to send the action to
+    ident: Identifier for this action
+    """
     translations = [('name', 'name')]
     module = ForeignKeyField(Module, related_name='actions')
     name = CharField()
 
 
 class ActionArg(BaseModel):
+    """Arguments to send with an action RPC
+    action: :class:`Action` to which the arguments belong
+    rpcargs: The argument
+    value: Value of this argument
+    """
     action = ForeignKeyField(Action, related_name='args')
     rpcarg = ForeignKeyField(RPCArg)
     value = ForeignKeyField(Expression)
@@ -350,6 +510,14 @@ class ActionArg(BaseModel):
 
     @classmethod
     def get_dict(cls, action, calculator):
+        """This function creates a dict from the arguments of a :class:`Action`
+        .. note::
+
+            A argument get separated by dots. ie: start.year becomes: {'start':{'year': value}}
+
+        :param sensor: The :class:`Action` to retrieve the argument dictionary for
+        :rtype: A dict with argument keys and values
+        """
         actionargs = cls.select().where(cls.action == action)
         kwargs = {}
         for act in actionargs:
@@ -360,7 +528,15 @@ class ActionArg(BaseModel):
         return kwargs
 
 class TriggerAction(BaseModel):
-    #mapping of triggers and actions
+    """:class:`Trigger` to :class:`Action` mapping
+
+    * action: The :class:`Action` to trigger
+    * trigger: which :class:`Trigger` triggers this action
+    * expression: Expression, the action is only executed 
+
+    if triggered and if the expression resolves to a non-False value
+    """
+    
     action = ForeignKeyField(Action, related_name='triggers')
     trigger = ForeignKeyField(Trigger, related_name='actions')
     expression = ForeignKeyField(Expression)
@@ -371,6 +547,16 @@ class TriggerAction(BaseModel):
 
 
 class dbhandler:
+    """Database connection and settings handler class.
+       Only specify a configuration or a database
+
+       :param conf: Dictionary to configure a database connection with. It
+                   should contain at least a database driver to use and
+                   the name of the database. Other parameters are passed
+                   to the database driver
+       :param database: Database object to use. It should be a peewee-usable database object
+    """
+
     def __init__(self, conf=None, database=None):
         self.connected = False
         if database:
@@ -400,6 +586,8 @@ class dbhandler:
                     raise ImproperlyConfigured("Cannot not initialize database connection")
 
     def create_tables(self):
+        """Try to create a set of empty tables, silently fails if the table already exists
+        """
         tables = [Module,
                   RPCType,
                   ModuleRPC,
@@ -424,6 +612,10 @@ class dbhandler:
                 pass
 
     def init_tables(self):
+        """Initialize any preconfigured content that is needed for initial
+           start up. Currently only the RPCTypes table is filled and needed;
+           All :class:`Module` are configured as inactive
+        """
         for type in rpctypes:
             try:
                 RPCType.get(RPCType.rpctype == type)
@@ -435,11 +627,15 @@ class dbhandler:
         q.execute()
 
     def connect(self):
+        """Open a connection to the database
+        """
         conn = dbconn.connect()
         self.connected = True
         return conn
 
     def close(self):
+        """Close the connection to the database
+        """
         conn = dbconn.close()
         self.connected = False
         return conn
