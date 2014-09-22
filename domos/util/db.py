@@ -188,7 +188,6 @@ class SensorValue(BaseModel):
     timestamp = DateTimeField(default=datetime.datetime.now)
 
 
-
     class meta:
         order_by = ('-Timestamp',)
         indexes = (
@@ -445,20 +444,20 @@ class dbhandler:
         self.connected = False
         return conn
 
+
 class ops:
-    
+
     @staticmethod
     def operation(function):
-        op = {
-        'last': ops.last,
-        'avg': ops.avg,
-        'sum': ops.sumation,
-        'diff': ops.diff,
-        'tdiff': ops.tdiff,
-        }[function.function]
+        op = {'last': ops.last,
+              'avg': ops.avg,
+              'sum': ops.sumation,
+              'diff': ops.diff,
+              'tdiff': ops.tdiff,
+              }[function.function]
         print('looking up value with')
         return op(function.source, function.args)
-    
+
     @staticmethod
     def last(source, num):
         last = source.lastrecords(int(num))
@@ -499,6 +498,7 @@ class ops:
             result = 0
         return result
 
+    @staticmethod
     def tdiff(source, args):
         selection = source.lastrecords(2)
         if selection:
@@ -509,9 +509,9 @@ class ops:
         else:
             result = 0
         return result
-    
 
-class sensorerror(Exception):                                    
+
+class sensorerror(Exception):
     def __init__(self, sensor, message):
         self.sensor = sensor
         self.message = message
