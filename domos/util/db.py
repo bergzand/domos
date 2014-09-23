@@ -3,6 +3,7 @@ from peewee import *
 import datetime
 import math
 import statistics
+import peewee
 
 dbconn = Proxy()
 
@@ -36,17 +37,19 @@ class BaseModel(Model):
         print(t)
         d = {name: getattr(self, variable) for variable, name in t}
         if 'deep' in kwargs:
+            print(kwargs['deep'])
             for parameter in kwargs['deep']:
-                dd = kwargs['deep']
-                if(hasattr(self,parameter)):
+                dd = list(kwargs['deep'])
+                print('deeping ' + parameter)
+                if(hasattr(self, parameter)):
                     dd.remove(parameter)
-                    if type(getattr(self,parameter))is list:
-                        l=[i.to_dict(deep=dd) for i in getattr(self,parameter)]
+                    if type(getattr(self, parameter)) is peewee.SelectQuery:
+                        l = [i.to_dict(deep = dd) for i in getattr(self, parameter)]
                     else:
-                        l =  getattr(self,parameter).to_dict()
+                        l =  getattr(self, parameter).to_dict()
                     d.update({parameter:l})
         return d
-    
+
     def from_dict(self,dict,**kwargs):
         print(self.__class__)
         if issubclass(self.__class__, BaseModel):
@@ -56,21 +59,21 @@ class BaseModel(Model):
         t = ts+self.translations
         print(t)
         for variable, name in t:
-            setattr(self,variable,dict[name]) 
+            setattr(self, variable, dict[name])
         if 'deep' in kwargs:
             for parameter in kwargs['deep']:
-                dd = kwargs['deep']
-                if(hasattr(self,parameter)):
-                    print('deeping '+parameter)
+                dd = list(kwargs['deep'])
+                if(hasattr(self, parameter)):
+                    print('deeping ' + parameter)
                     dd.remove(parameter)
-                    if type(getattr(self,parameter))is list:
+                    if type(getattr(self, parameter)) is peewee.SelectQuery:
                         print('islist')
-                        setattr(self,parameter,[])
+                        setattr(self, parameter,[])
                         for i in dict[parameter] :
-                             getattr(self,parameter).append(Sensor().from_dict(i,deep=dd))
+                             getattr(self,parameter).append(Sensor().from_dict(i, deep = dd))
                     else:
                         print('isvariable')
-                        getattr(self,parameter).from_dict(dict[parameter],deep=dd)
+                        getattr(self, parameter).from_dict(dict[parameter], deep = dd)
         return self
 
 class Module(BaseModel):
@@ -103,7 +106,7 @@ class Module(BaseModel):
     def list(cls):
         """returns a list of modules
         """
-        return [module for module in module.select()]
+        return [module for module in Module.select()]
 
     @classmethod
     def get_by_name(cls, name):
@@ -126,7 +129,7 @@ class RPCType(BaseModel):
 
 
 class ModuleRPC(BaseModel):
-    """RPC a :class:`Module` supports. 
+    """RPC a :class:`Module` supports.
 
     * Module: foreign key to a :class:`Module`
     * RPCType: foreign, the type of :class:`RPCType`
@@ -164,7 +167,7 @@ class ModuleRPC(BaseModel):
     @classmethod
     def get_by_module(cls, module, type=None):
         """ Retrieve RPC's associated with a module
-        
+
         :param module: :class`Module` to retrieve remote procedures for
         :param type: type of rpc to return
         :rtype: Iterator with remote procedures
@@ -199,7 +202,7 @@ class RPCArg(BaseModel):
     @classmethod
     def get_by_type(cls, module, type):
         """Query the database for remote procedure arguments of the specified module and of a specified type
-           
+
         """
         return RPCArg.select().join(ModuleRPC).join(RPCType).where((ModuleRPC.Module == module) &
                                                                    (RPCType.rpctype == 'add'))
@@ -207,7 +210,7 @@ class RPCArg(BaseModel):
 
 class Sensor(BaseModel):
     """Sensor to measure
-    
+
     * module: :class:`Module` associated with the sensor
     * ident: identifier of the sensor
     * active: Whether the sensor is active or disabled
@@ -248,7 +251,7 @@ class Sensor(BaseModel):
     @classmethod
     def get_by_module(cls, module):
         """Return all sensors of the specified :class:`module`
-        
+
         :param module: The :class:`Module` object or ID to
         :rtype: An iterator with :class:`Sensor` classes
         """
@@ -268,14 +271,14 @@ class Sensor(BaseModel):
 
     def add_value(self, value):
         """add a :class:`SensorValue` to the database for this :class:`Sensor`
-        
+
         :param value: The value to add to the database
         """
         value = SensorValue.create(sensor=self, value=str(value))
 
     def lastrecords(self, num):
         """Returns a list of the last values of this sensor
-        
+
         :param num: Amount of :class:`SensorValue` to return
         :rtype: an iterator over the values
         """
@@ -400,7 +403,7 @@ class Trigger(BaseModel):
         .. note::
 
             This function will never return itself as trigger result
-        
+
         :rtype: an iterator with :class:`Trigger` classes
         """
         return Trigger.select(Trigger, Expression).join(Expression)\
@@ -413,11 +416,11 @@ class Trigger(BaseModel):
     @classmethod
     def get_affected_by_trigger(cls, trigger):
         """Returns all :class:`Trigger` affected by the specified trigger.
-        
+
         .. note::
-            
+
             This function will never return the specified trigger in its results
-        
+
         :param trigger: The :class:`Trigger` to query for
         :rtype: an iterator with affected :class:`Trigger`
         """
@@ -431,7 +434,7 @@ class Trigger(BaseModel):
     @classmethod
     def get_affected_by_sensor(cls, sensor):
         """Returns all :class:`Trigger` affected by the specified :class:`Sensor`.
-        
+
         :param sensor: The sensor to query for
         :rtype: an iterator of affected :class:`Trigger` classes
         """
@@ -455,11 +458,11 @@ class Trigger(BaseModel):
             else:
                 rtn = self.lastvalue
         return rtn
-            
-        
+
+
 class TriggerValue(BaseModel):
     """values of triggers
-    
+
     * trigger: :class:`Trigger` to which this value belongs
     * value: The actual value
     * timestamp: Time at which this value was calculated
@@ -479,7 +482,7 @@ class TriggerValue(BaseModel):
 
 class VarSensor(BaseModel):
     """Mapping of :class:`Sensor` used by :class:`Expression`
-    
+
     * source: which :class:`Sensor` to which...
     * expression: :class:`Expression` using this sensor
     * function: Which function to use on the values of this sensor
@@ -495,7 +498,7 @@ class VarSensor(BaseModel):
 
 class VarTrigger(BaseModel):
     """Mapping of :class:`Trigger` used by :class:`Expression`
-    
+
     * source: which :class:`Trigger` to which...
     * expression: :class:`Expression` using this trigger
     * function: Which function to use on the values of this sensor
@@ -566,15 +569,15 @@ class TriggerAction(BaseModel):
 
     * action: The :class:`Action` to trigger
     * trigger: which :class:`Trigger` triggers this action
-    * expression: Expression, the action is only executed 
+    * expression: Expression, the action is only executed
 
     if triggered and if the expression resolves to a non-False value
     """
-    
+
     action = ForeignKeyField(Action, related_name='triggers')
     trigger = ForeignKeyField(Trigger, related_name='actions')
     expression = ForeignKeyField(Expression)
-    
+
     @classmethod
     def get_by_trigger(cls, trigger):
         return cls.select(cls, Action).join(Action).where(cls.trigger == trigger)
