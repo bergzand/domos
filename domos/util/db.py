@@ -8,75 +8,264 @@ dbconn = Proxy()
 
 rpctypes = ['list', 'get', 'del', 'add', 'set']
 
+#Peewee database models
+
 
 class BaseModel(Model):
-    descr = TextField(null=True)
+    """Base model of the database, provides default settings
+    """
+    translations = [('id', 'id')]
 
     class Meta:
         database = dbconn
 
     @classmethod
     def get_by_id(cls, num):
+        """Returns the object with the specified database ID
+        :param num: The ID of the object
+        """
         return cls.get(cls.id == num)
-    def jsjson(self):
-        return {'id':self.id,'descr':self.descr}
+
+    def to_dict(self, **kwargs):
+        print(self.__class__)
+        if issubclass(self.__class__, BaseModel):
+            t = super(self.__class__, self).translations
+        else:
+            t = []
+        print(t)
+        t += self.translations
+        print(t)
+        d = {name: getattr(self, variable) for variable, name in t}
+        return d
+
 
 class Module(BaseModel):
+    """Model of a module
+
+    * Name: Name of the module
+    * queue: message queue the module is listening on
+    * Active: whether the module is active or not
+    """
+    translations = [('name', 'name'),
+                    ('queue', 'q'),
+                    ('active', 'active'),
+                    ('desc', 'des')]
     name = CharField()
     queue = CharField()
-    Active = BooleanField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'name':self.name,'Active':self.Active,'queue':self.queue}
-        )
+    active = BooleanField()
+    desc = TextField(null=True)
+
+    @classmethod
+    def add(cls, name, queue, active=True):
+        """Add a module to the database
+
+        :param name: The name of the module
+        :param queue: The message queue to reach the module on
+        :param active: Set the module as active or inactive
+        """
+        return cls.create(name=name, queue=queue, Active=active)
+
+    @classmethod
+    def list(cls):
+        """returns a list of modules
+        """
+        return [module for module in module.select()]
+
+    @classmethod
+    def get_by_name(cls, name):
+        """Returns the :class:`Module` object with the specified name. throws an peewee.DoesNotExist exception if the module does not exist.
+
+        :param name: The name of the :class:`Module`
+        :rtype: A :class:`Module` object.
+        """
+        return cls.get(Module.name == name)
 
 
-class RPCTypes(BaseModel):
+class RPCType(BaseModel):
+    """Available types of RPC calls
+    see also the rpctypes variable
+    """
+    translations = [('rpctype', 'rpctype'),
+                    ('desc', 'des')]
     rpctype = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'rpctype':self.rpctype}
-        )
+    desc = TextField(null=True)
+
 
 class ModuleRPC(BaseModel):
-    Module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
-    RPCType = ForeignKeyField(RPCTypes)
-    Key = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Module':self.Module,'RPCType':self.RPCType,'Key':self.Key}
-        )
+    """RPC a :class:`Module` supports. 
 
-class RPCArgs(BaseModel):
-    ModuleRPC = ForeignKeyField(ModuleRPC, on_delete='CASCADE', related_name='args')
+    * Module: foreign key to a :class:`Module`
+    * RPCType: foreign, the type of :class:`RPCType`
+    * key: Key to distiguish multiple rpc's of the same type
+    """
+    translations = [('key', 'key'),
+                    ('desc', 'des')]
+    module = ForeignKeyField(Module, related_name='rpcs', on_delete='CASCADE')
+    rpctype = ForeignKeyField(RPCType)
+    key = CharField()
+    desc = TextField(null=True)
+
+    @classmethod
+    def add(cls, module, key, rpctype, args, desc=None):
+        """ Adds an rpc command to the database
+
+            :param module: module object
+            :param key: name of the rpc
+            :param rpctype: string of the type of the rpc
+            :param args: list of tuples, (name, type, optional, desc)
+            :param desc: description of the rpc request
+        """
+
+        rpcrecord = RPCType.get(RPCType.rpctype == rpctype)
+        with dbconn.transaction():
+            newrpc = ModuleRPC.create(module=module, key=key, rpctype=rpcrecord)
+            if args:
+                argdict = [{'name': name,
+                            'rpcargtype': rpctype,
+                            'optional': opt,
+                            'desc': desc,
+                            'modulerpc': newrpc}for name, rpctype, opt, decr in args]
+                RPCArg.insert_many(argdict).execute()
+
+    @classmethod
+    def get_by_module(cls, module, type=None):
+        """ Retrieve RPC's associated with a module
+        
+        :param module: :class`Module` to retrieve remote procedures for
+        :param type: type of rpc to return
+        :rtype: Iterator with remote procedures
+        """
+        rtrn = None
+        if type:
+            rtrn = cls.select(cls).join(RPCType).where((cls.module == module) & (RPCType.rpctype == type))
+        else:
+            rtrn = cls.select(cls).join(RPCType).where((cls.module == module) & (RPCType.rpctype == type))
+        return rtrn
+
+
+class RPCArg(BaseModel):
+    """Arguments for a RPC
+
+    * modulerpc: foreign key to a :class:`ModuleRPC`
+    * name: Name of the argument, used in the dictionary send to the module
+    * rpcargtype: Type of argument, eg: string, integer
+    * optional: Whether the argument is optional
+    * desc: description of this argument
+    """
+    translations = [('name', 'name'),
+                    ('rpcargtype', 'rpcargtype'),
+                    ('optional', 'optional'),
+                    ('desc', 'des')]
+    modulerpc = ForeignKeyField(ModuleRPC, on_delete='CASCADE', related_name='args')
     name = CharField()
-    RPCargtype = CharField()
-    Optional = BooleanField(default=False)
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'ModuleRPC':self.ModuleRPC,'name':self.name,'RPCargtype':self.RPCargtype,'Optional':self.Optional}
-        )
+    rpcargtype = CharField()
+    optional = BooleanField(default=False)
+    desc = TextField(null=True)
 
-class Sensors(BaseModel):
-    Module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
-    ident = CharField()
-    Active = BooleanField(default=True)
-    Instant = BooleanField(default=False)
-    def jsjson(self):
-        return dict(super(Sensors,self).jsjson(),
-        **{'Module':self.Module,'ident':self.ident,'Active':self.Active,'Instant':self.Instant}
-        )
-class SensorValues(BaseModel):
-    Sensor = ForeignKeyField(Sensors, related_name='values', on_delete='CASCADE')
-    Value = CharField()
-    Timestamp = DateTimeField(default=datetime.datetime.now)
-    descr = None
-    def jsjson(self):
-        superdict = super(Module,self).jsjson()
-        superdict.pop('descr')
-        return dict(superdict,
-        **{'Sensor':self.Sensor,'Value':self.Value,'Timestamp':self.Timestamp}
-        )
+    @classmethod
+    def get_by_type(cls, module, type):
+        """Query the database for remote procedure arguments of the specified module and of a specified type
+           
+        """
+        return RPCArg.select().join(ModuleRPC).join(RPCType).where((ModuleRPC.Module == module) &
+                                                                   (RPCType.rpctype == 'add'))
+
+
+class Sensor(BaseModel):
+    """Sensor to measure
+    
+    * module: :class:`Module` associated with the sensor
+    * ident: identifier of the sensor
+    * active: Whether the sensor is active or disabled
+    * instant: is the sensor of the type Instant
+    """
+    translations = [('name', 'name'),
+                    ('active', 'active'),
+                    ('instant', 'instant'),
+                    ('desc', 'des')]
+    module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
+    name = CharField()
+    active = BooleanField(default=True)
+    instant = BooleanField(default=False)
+    desc = TextField(null=True)
+
+    @classmethod
+    def add(cls, module, name, argdata):
+        """Add a sensor to the database
+
+        :param module: The :class:`Module` to add the sensor to
+        :param name: An human readable identifier, ie: temp_outside
+        :param argdata: list of dicts with name=value pairs
+        """
+        sensor = Sensor()
+        sensor.name = name
+        sensor.module = module
+        sensor.save()
+        rpcargs = RPCArg.get_by_type(module, type)
+        queryargs = []
+        for rpcarg in rpcargs:
+            if rpcarg.name in argdata:
+                arg = {'sensor': sensor, 'rpcarg': rpcarg, 'value': argdata[rpcarg.name]}
+                queryargs.append(arg)
+                #TODO: missing key exceptions and handling
+        q = SensorArg.insert_many(queryargs).execute()
+        return sensor
+
+    @classmethod
+    def get_by_module(cls, module):
+        """Return all sensors of the specified :class:`module`
+        
+        :param module: The :class:`Module` object or ID to
+        :rtype: An iterator with :class:`Sensor` classes
+        """
+        return Sensor.select(Sensor, Module).join(Module).where(Sensor.module == module)
+
+    @classmethod
+    def get_by_name(cls, name):
+        """Query the database for a :class:`Sensor` with the specified name.
+        .. note::
+
+            This returns only the first :class:`Sensor` with this name
+
+        :param name: The name to query for
+        :rtype: A :class:`Sensor` class
+        """
+        return Sensor.get(Sensor.name == name)
+
+    def add_value(self, value):
+        """add a :class:`SensorValue` to the database for this :class:`Sensor`
+        
+        :param value: The value to add to the database
+        """
+        value = SensorValue.create(sensor=self, value=str(value))
+
+    def lastrecords(self, num):
+        """Returns a list of the last values of this sensor
+        
+        :param num: Amount of :class:`SensorValue` to return
+        :rtype: an iterator over the values
+        """
+        if self.instant:
+            return []
+        else:
+            return SensorValue.select().where(SensorValue.sensor == self).order_by(SensorValue.timestamp.desc()).limit(num).naive()
+
+
+class SensorValue(BaseModel):
+    """Values of a sensor, represents a measurement value
+    of the sensor at a certain point in time
+
+    * sensor: associated :class:`Sensor`
+    * value: measurement value
+    * timestamp: Point in time of the value
+    """
+    translations = [('value', 'value'),
+                    ('timestamp', 'timestamp'),
+                    ('descr', 'des')]
+    sensor = ForeignKeyField(Sensor, related_name='values', on_delete='CASCADE')
+    value = CharField()
+    timestamp = DateTimeField(default=datetime.datetime.now)
+
     class meta:
         order_by = ('-Timestamp',)
         indexes = (
@@ -84,116 +273,290 @@ class SensorValues(BaseModel):
             )
 
 
-class SensorArgs(BaseModel):
-    Sensor = ForeignKeyField(Sensors, related_name='args', on_delete='CASCADE')
-    RPCArg = ForeignKeyField(RPCArgs)
-    Value = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Sensor':self.Sensor,'RPCArg':self.RPCArg,'Value':self.Value}
-        )
+class SensorArg(BaseModel):
+    """Argument of a sensor, combination of a :class:`RPCArg` and a :class:`Sensor`
 
-class Macros(BaseModel):
-    Name = CharField()
-    Value = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Name':self.Name,'Value':self.Value}
-        )
+    * sensor: The :class:`Sensor` for which the argument is
+    * rpcarg: The argument, of type :class:`RPCArg`
+    * value: The value of this argument
+    """
+    translations = [('value', 'value')]
+    sensor = ForeignKeyField(Sensor, related_name='args', on_delete='CASCADE')
+    rpcarg = ForeignKeyField(RPCArg)
+    value = CharField()
 
-class Match(BaseModel):
-    descr = None
-    Matchstring = CharField()
-    Pickled = BlobField(null=True)
-    def jsjson(self):
-        superdict = super(Module,self).jsjson()
-        superdict.pop('descr')
-        return dict(superdict,
-        **{'Matchstring':self.Matchstring}
-        )
-
-class Triggers(BaseModel):
-    Name = CharField()
-    Match = ForeignKeyField(Match)
-    Record = BooleanField()
-    Lastvalue = CharField(null=True, default="null")
-    
-    def last(self, num=1):
-        if self.Lastvalue:
-            return self.Lastvalue
+    @staticmethod
+    def _to_dict(kwarg, key, value):
+        if len(key.split('.', 1)) > 1:
+            start, end = key.split('.', 1)
+            if start not in kwarg:
+                kwarg[start] = {}
+            key, value = SensorArg._to_dict(kwarg[start], end, value)
+            kwarg[start][key] = value
+            print(kwarg)
+            return start, kwarg[start]
         else:
-            return '0'
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Name':self.Name,'Match':self.Match,'Record':self.Record,'Lastvalue':self.Lastvalue}
-        )
+            return key, value
 
-class TriggerValues(BaseModel):
-    Trigger = ForeignKeyField(Triggers, related_name='values', on_delete='CASCADE')
-    Value = CharField()
-    Timestamp = DateTimeField(default=datetime.datetime.now)
-    descr = None
+    @staticmethod
+    def get_dict(sensor):
+        """This function creates a dict from the arguments of a :class:`sensor`
+        .. note::
+
+            A argument get separated by dots. ie: start.year becomes: {'start':{'year': value}}
+
+        :param sensor: The sensor to retrieve the argument dictionary for
+        :rtype: A dict with argument keys and values
+        """
+        sensorargs = SensorArg.select().where(SensorArg.sensor == sensor)
+        kwargs = {}
+        for sensorarg in sensorargs:
+            value = sensorarg.value
+            rpcarg = sensorarg.rpcarg
+            key, value = SensorArg._to_dict(kwargs, rpcarg.name, value)
+            kwargs[key] = value
+        kwargs['key'] = sensor.id
+        kwargs['name'] = sensor.name
+        return kwargs
+
+
+class Macro(BaseModel):
+    """Macro table, nothing more that key-value pairs for use in :class:`Expression` as constants
+    """
+    translations = [('name', 'name'), ('value', 'value')]
+    name = CharField()
+    value = CharField()
+
+
+class Expression(BaseModel):
+    """Table that contains expressions used by other tables
+
+    * expression: String containing the expression
+    * pickled: binary blob containing the pickled AST of the expression
+    """
+    translations = [('expression', 'expression')]
+    expression = CharField()
+    pickled = BlobField(null=True)
+
+    def get_used_sensors(self):
+        return VarSensor.select(VarSensor, Sensor).join(Sensor).where(VarSensor.expression == self)
+
+    def get_used_triggers(self):
+        return VarTrigger.select(VarTrigger, Trigger).join(Trigger).where(VarTrigger.expression == self)
+
+
+class Trigger(BaseModel):
+    """Table with triggers
+
+    * name: Name of the trigger
+    * expression: foreign, class:`Expression` on which the trigger activates
+    * record: Whether to log this trigger to the triggervalues table
+    * lastvalue: Last calculated value of this trigger
+    """
+    translations = [('name', 'name'),
+                    ('record', 'record'),
+                    ('lastvalue', 'lastvalue')]
+    name = CharField()
+    expression = ForeignKeyField(Expression)
+    record = BooleanField()
+    lastvalue = CharField(null=True, default="null")
+
+    def get_affected_triggers(self):
+        """Returns all triggers that have this trigger in their :class:`Expression`
+        .. note::
+
+            This function will never return itself as trigger result
+        
+        :rtype: an iterator with :class:`Trigger` classes
+        """
+        return Trigger.select(Trigger, Expression).join(Expression)\
+            .join(VarTrigger)\
+            .where(
+                (VarTrigger.source == self) &
+                (Trigger != self)
+                )
+
+    @classmethod
+    def get_affected_by_trigger(cls, trigger):
+        """Returns all :class:`Trigger` affected by the specified trigger.
+        
+        .. note::
+            
+            This function will never return the specified trigger in its results
+        
+        :param trigger: The :class:`Trigger` to query for
+        :rtype: an iterator with affected :class:`Trigger`
+        """
+        return Trigger.select(Trigger, Expression).join(Expression)\
+            .join(VarTrigger)\
+            .where(
+                (VarTrigger.source == trigger) &
+                (Trigger.id != trigger)
+                )
+
+    @classmethod
+    def get_affected_by_sensor(cls, sensor):
+        """Returns all :class:`Trigger` affected by the specified :class:`Sensor`.
+        
+        :param sensor: The sensor to query for
+        :rtype: an iterator of affected :class:`Trigger` classes
+        """
+        return Trigger.select(Trigger, Expression).join(Expression).join(VarSensor, JOIN_INNER).where(VarSensor.source == sensor)
+
+    def add_value(self, value):
+        """Add a value to the trigger
+
+        :param value: The value to add to this :class:`Trigger`
+        """
+        self.lastvalue = value
+        self.save()
+        if self.record:
+            value = TriggerValue.create(trigger=self, value=value)
+
+    def lastrecords(self, num):
+        rtn = 0
+        if self.lastvalue:
+            if self.record:
+                rtn = TriggerValue.select().where(TriggerValue.trigger == self).order_by(TriggerValue.timestamp.desc()).limit(num).naive()
+            else:
+                rtn = self.lastvalue
+        return rtn
+            
+        
+class TriggerValue(BaseModel):
+    """values of triggers
+    
+    * trigger: :class:`Trigger` to which this value belongs
+    * value: The actual value
+    * timestamp: Time at which this value was calculated
+    """
+    translations = [('value', 'value'),
+                    ('timestamp', 'timestamp')]
+    trigger = ForeignKeyField(Trigger, related_name='values', on_delete='CASCADE')
+    value = CharField()
+    timestamp = DateTimeField(default=datetime.datetime.now)
 
     class meta:
         order_by = ('-Timestamp',)
         indexes = (
             (('Trigger', 'Timestamp'), True)
             )
-    def jsjson(self):
-        superdict = super(Module,self).jsjson()
-        superdict.pop('descr')
-        return dict(superdict,
-        **{'Trigger':self.Trigger,'Value':self.Value,'Timestamp':self.Timestamp}
-        )
 
-class SensorFunctions(BaseModel):
-    Sensor = ForeignKeyField(Sensors,related_name='functions')
-    Match = ForeignKeyField(Match)
-    Function = CharField()
-    Args = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Sensor':self.Sensor,'Match':self.Match,'Function':self.Function,'Args':self.Args}
-        )
 
-class TriggerFunctions(BaseModel):
-    Trigger = ForeignKeyField(Triggers, related_name='functions')
-    Match = ForeignKeyField(Match)
-    Function = CharField()
-    Args = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Trigger':self.Trigger,'Match':self.Match,'Function':self.Function,'Args':self.Args}
-        )
+class VarSensor(BaseModel):
+    """Mapping of :class:`Sensor` used by :class:`Expression`
+    
+    * source: which :class:`Sensor` to which...
+    * expression: :class:`Expression` using this sensor
+    * function: Which function to use on the values of this sensor
+    * args: Tuple of arguments for the sensor function
+    """
+    translations = [('function', 'function'),
+                    ('args', 'args')]
+    source = ForeignKeyField(Sensor, related_name='functions')
+    expression = ForeignKeyField(Expression)
+    function = CharField()
+    args = CharField()
 
-class Actions(BaseModel):
-    Module = ForeignKeyField(Module,related_name='actions')
-    ident = CharField()
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Module':self.Module,'ident':self.ident}
-        )
 
-class ActionArgs(BaseModel):
-    Action = ForeignKeyField(Actions,related_name='args')
-    RPCArg = ForeignKeyField(RPCArgs)
-    Value = ForeignKeyField(Match)
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Action':self.Action,'RPCArg':self.RPCArg,'Value':self.Value}
-        )
+class VarTrigger(BaseModel):
+    """Mapping of :class:`Trigger` used by :class:`Expression`
+    
+    * source: which :class:`Trigger` to which...
+    * expression: :class:`Expression` using this trigger
+    * function: Which function to use on the values of this sensor
+    * args: Tuple of arguments for the sensor function
+    """
+    translations = [('function', 'function'),
+                    ('args', 'args')]
+    source = ForeignKeyField(Trigger, related_name='functions')
+    expression = ForeignKeyField(Expression)
+    function = CharField()
+    args = CharField()
 
-class ActionsForTrigger(BaseModel):
-    #mapping of triggers and actions
-    Action = ForeignKeyField(Actions,related_name='triggers')
-    Trigger = ForeignKeyField(Triggers,related_name='actions')
-    Match = ForeignKeyField(Match)
-    def jsjson(self):
-        return dict(super(Module,self).jsjson(),
-        **{'Action':self.Action,'Trigger':self.Trigger,'Match':self.Match}
-        )
+
+class Action(BaseModel):
+    """Actions to send to a module
+    module: The :class:`Module` to send the action to
+    ident: Identifier for this action
+    """
+    translations = [('name', 'name')]
+    module = ForeignKeyField(Module, related_name='actions')
+    name = CharField()
+
+
+class ActionArg(BaseModel):
+    """Arguments to send with an action RPC
+    action: :class:`Action` to which the arguments belong
+    rpcargs: The argument
+    value: Value of this argument
+    """
+    action = ForeignKeyField(Action, related_name='args')
+    rpcarg = ForeignKeyField(RPCArg)
+    value = ForeignKeyField(Expression)
+
+    @staticmethod
+    def _to_dict(kwarg, key, value):
+        if len(key.split('.', 1)) > 1:
+            start, end = key.split('.', 1)
+            if start not in kwarg:
+                kwarg[start] = {}
+            key, value = SensorArg._to_dict(kwarg[start], end, value)
+            kwarg[start][key] = value
+            print(kwarg)
+            return start, kwarg[start]
+        else:
+            return key, value
+
+    @classmethod
+    def get_dict(cls, action, calculator):
+        """This function creates a dict from the arguments of a :class:`Action`
+        .. note::
+
+            A argument get separated by dots. ie: start.year becomes: {'start':{'year': value}}
+
+        :param sensor: The :class:`Action` to retrieve the argument dictionary for
+        :rtype: A dict with argument keys and values
+        """
+        actionargs = cls.select().where(cls.action == action)
+        kwargs = {}
+        for act in actionargs:
+            value = calculator.resolve(act.value)
+            rpcarg = act.rpcarg
+            key, value = cls._to_dict(kwargs, rpcarg.name, value)
+            kwargs[key] = value
+        return kwargs
+
+class TriggerAction(BaseModel):
+    """:class:`Trigger` to :class:`Action` mapping
+
+    * action: The :class:`Action` to trigger
+    * trigger: which :class:`Trigger` triggers this action
+    * expression: Expression, the action is only executed 
+
+    if triggered and if the expression resolves to a non-False value
+    """
+    
+    action = ForeignKeyField(Action, related_name='triggers')
+    trigger = ForeignKeyField(Trigger, related_name='actions')
+    expression = ForeignKeyField(Expression)
+    
+    @classmethod
+    def get_by_trigger(cls, trigger):
+        return cls.select(cls, Action).join(Action).where(cls.trigger == trigger)
+
 
 class dbhandler:
+    """Database connection and settings handler class.
+       Only specify a configuration or a database
+
+       :param conf: Dictionary to configure a database connection with. It
+                   should contain at least a database driver to use and
+                   the name of the database. Other parameters are passed
+                   to the database driver
+       :param database: Database object to use. It should be a peewee-usable database object
+    """
+
     def __init__(self, conf=None, database=None):
         self.connected = False
         if database:
@@ -223,21 +586,23 @@ class dbhandler:
                     raise ImproperlyConfigured("Cannot not initialize database connection")
 
     def create_tables(self):
+        """Try to create a set of empty tables, silently fails if the table already exists
+        """
         tables = [Module,
-                  RPCTypes,
+                  RPCType,
                   ModuleRPC,
-                  RPCArgs,
-                  Match,
-                  Sensors,
-                  SensorValues,
-                  SensorArgs,
-                  Actions,
-                  Triggers,
-                  TriggerValues,
-                  SensorFunctions,
-                  TriggerFunctions,
-                  ActionsForTrigger,
-                  ActionArgs]
+                  RPCArg,
+                  Expression,
+                  Sensor,
+                  SensorValue,
+                  SensorArg,
+                  Action,
+                  Trigger,
+                  TriggerValue,
+                  VarSensor,
+                  VarTrigger,
+                  TriggerAction,
+                  ActionArg]
 
         for table in tables:
             try:
@@ -247,255 +612,68 @@ class dbhandler:
                 pass
 
     def init_tables(self):
+        """Initialize any preconfigured content that is needed for initial
+           start up. Currently only the RPCTypes table is filled and needed;
+           All :class:`Module` are configured as inactive
+        """
         for type in rpctypes:
             try:
-                RPCTypes.get(RPCTypes.rpctype == type)
-            except RPCTypes.DoesNotExist:
-                newtype = RPCTypes()
+                RPCType.get(RPCType.rpctype == type)
+            except RPCType.DoesNotExist:
+                newtype = RPCType()
                 newtype.rpctype = type
                 newtype.save()
-        q = Module.update(Active=False)
+        q = Module.update(active=False)
         q.execute()
 
     def connect(self):
+        """Open a connection to the database
+        """
         conn = dbconn.connect()
         self.connected = True
         return conn
 
     def close(self):
+        """Close the connection to the database
+        """
         conn = dbconn.close()
         self.connected = False
         return conn
 
-    def addModule(self, name, queue, active=True):
-        return Module.create(name=name, queue=queue, Active=active)
 
-    def addRPC(self, module, key, rpctype, args, descr=None):
-        '''
-            Adds an rpc command to the database
-            module: module object
-            key: name of the rpc
-            rpctype: string of the type of the rpc
-            args: list of tuples, (name, type, optional, descr)
-            descr: description of the rpc request
-        '''
+class ops:
 
-        rpcrecord = RPCTypes.get(RPCTypes.rpctype == rpctype)
-        with dbconn.transaction():
-            newrpc = ModuleRPC.create(Module=module, Key=key, RPCType=rpcrecord)
-            if args:
-                argdict = [{'name':name,
-                            'RPCargtype': rpctype,
-                            'Optional':opt,
-                            'descr': descr,
-                            'ModuleRPC': newrpc}for name, rpctype, opt, decr in args]
-                RPCArgs.insert_many(argdict).execute()
-
-    def _checkArg(self, oldArg, newArg):
-        if oldArg == NewArg:
-            return True
-        else:
-            return False
-        
-    def _checkRPC(self, rpc, args):
-        pass
-        
-        
-
-    def updateOrAddModule(self, moduledata):
-        newmodule = False
-        try:
-            module = Module.get(Module.name == moduledata['name'])
-            module.Active = True
-            module.save()
-        except DoesNotExist:
-            module = Module()
-            module.name = moduledata['name']
-            module.queue = moduledata['queue']
-            module.active = True
-            module.save()
-        else:
-            newmodule = True
-            with dbconn.transaction():
-                for rpc in moduledata['rpc']:
-                    newrpc = ModuleRPC()
-                    newrpc.Module = module
-                    newrpc.Key = rpc['key']
-                    newrpc.RPCType = RPCTypes.get(RPCTypes.rpctype == rpc['type'])
-                    newrpc.save()
-                    if "args" in rpc:
-                        for arg in rpc['args']:
-                            newarg = RPCArgs()
-                            newarg.name = arg['name']
-                            newarg.RPCargtype = arg['type']
-                            newarg.ModuleRPC = newrpc
-                            newarg.save()
-        if not newmodule:
-            pass
-
-    def getdict(self, kwarg, key, value):
-        if len(key.split('.', 1)) > 1:
-            start, end = key.split('.', 1)
-            if start not in kwarg:
-                kwarg[start] = {}
-            key, value = self.getdict(kwarg[start], end, value)
-            kwarg[start][key] = value
-            print(kwarg)
-            return start, kwarg[start]
-        else:
-            return key, value
-
-    def getModules(self):
-        #returns an iterator with Module objects
-        return Module.select().naive().iterator()
-
-    def listModules(self):
-        #returns a list of modules
-        return [module for module in self.getModules()]
-
-    def getModule(self, modulename):
-        #returns Module object with modulename
-        return Module.get(Module.name == modulename)
-
-    def getModuleByID(self, id):
-        return Module.get_by_id(id)
-
-    def getRPCs(self, module, type):
-        return ModuleRPC.select(ModuleRPC).join(RPCTypes).where((ModuleRPC.Module == module) & (RPCTypes.rpctype == type))
-        
-    def getRPCCall(self, module, type):
-        return ModuleRPC.select().join(RPCTypes).where((ModuleRPC.Module == module) & (RPCTypes.rpctype == type)).limit(1)[0]
-
-    def addSensor(self, module, identifier, argdata):
-        '''
-            argdata: list of dicts with name=value pairs
-        '''
-        sensor = Sensors()
-        sensor.ident = identifier
-        sensor.Module = module
-        sensor.save()
-        rpcargs = RPCArgs.select().join(ModuleRPC).join(RPCTypes).where((ModuleRPC.Module == module) &
-                                                                        (RPCTypes.rpctype == 'add'))
-        queryargs = []
-        for rpcarg in rpcargs:
-            if rpcarg.name in argdata:
-                arg = {'Sensor': sensor, 'RPCArg': rpcarg, 'Value': argdata[rpcarg.name]}
-                queryargs.append(arg)
-                #TODO: missing key exceptions and handling
-        q = SensorArgs.insert_many(queryargs).execute()
-        return sensor
-
-    def getModuleSensors(self, module):
-        return Sensors.select(Sensors, Module).join(Module).where(Sensors.Module == module)
-
-    def getSensors(self):
-        return Sensors.select(Sensors, Module).join(Module)
-
-    def getSensorByIdent(self, ident):
-        return Sensors.get(Sensors.ident == ident)
-    
-    def getSensorDict(self, sensor):
-        sensorargs = SensorArgs.select().where(SensorArgs.Sensor == sensor)
-        kwargs = {}
-        for sensorarg in sensorargs:
-            value = sensorarg.Value
-            rpcarg = sensorarg.RPCArg
-            key, value = self.getdict(kwargs, rpcarg.name, value)
-            kwargs[key] = value
-        kwargs['key'] = sensor.id
-        kwargs['ident'] = sensor.ident
-        return kwargs
-
-    def getActions(self, action):
-        actionargs = ActionArgs.select(ActionArgs, RPCArgs).join(RPCArgs).where(ActionArgs.Action == action)
-        return actionargs
-
-    def addValue(self, sensor_id, value):
-        value = SensorValues.create(Sensor=sensor_id, Value=str(value))
-
-    def getsensorfunctions(self, match_id):
-        return SensorFunctions.select(SensorFunctions, Sensors).join(Sensors).where(SensorFunctions.Match == match_id)
-
-    def gettriggerfunctions(self, match_id):
-        return TriggerFunctions.select(TriggerFunctions, Triggers).join(Triggers).where(TriggerFunctions.Match == match_id)
-
-    def gettriggersfromsensor(self, sensor_id):
-        funcs = Triggers.select(Triggers, Match).join(Match).join(SensorFunctions, JOIN_INNER).where(SensorFunctions.Sensor == sensor_id).iterator()
-        return [data for data in funcs]
-
-    def gettriggersfromtrigger(self, trigger_id):
-        funcs = Triggers.select(Triggers, Match).join(Match)\
-            .join(TriggerFunctions)\
-            .where(
-                (TriggerFunctions.Trigger == trigger_id) &
-                (Triggers.id != trigger_id)).iterator()
-        return funcs
-              
-    def addTrigger(self, name, trigger, sensorlist, descr=None):
-        '''
-            trigger string examples:
-            "__trig0__ == True"
-        '''
-        trigger = Triggers.create(Name=name, Trigger=trigger)
-    
-    def addTriggervalue(self, trigger, value):
-        trigger.Lastvalue = value
-        trigger.save()
-        if trigger.Record:
-            value = TriggerValues.create(Trigger=trigger, Value=value)
-    
-    def checkSensorTriggers(self, sensor):
-        sensortriggers = Triggers.Select().Join(Functions).Where(Functions.Sensor == sensor)
-        for sensortrigger in sensortriggers:
-            pass
-            #check this sensor on true
-
-    def getActionsfromtrigger(self, trigger_id):
-        actions = ActionsForTrigger.select(ActionsForTrigger, Actions).join(Actions).where(ActionsForTrigger.Trigger == trigger_id)
-        return [action for action in actions]
-
-
-class sensorops:
-    
     @staticmethod
-    def operation(sensorfunction):
-        op = {
-        'last': sensorops.last,
-        'avg': sensorops.avg,
-        'sum': sensorops.sumation,
-        'diff': sensorops.diff,
-        'tdiff': sensorops.tdiff,
-        }[sensorfunction.Function]
+    def operation(function):
+        op = {'last': ops.last,
+              'avg': ops.avg,
+              'sum': ops.sumation,
+              'diff': ops.diff,
+              'tdiff': ops.tdiff,
+              }[function.function]
         print('looking up value with')
-        return op(sensorfunction.Sensor, sensorfunction.Args)
+        return op(function.source, function.args)
 
     @staticmethod
-    def _lastrecords(sensor, num):
-        if sensor.Instant:
-            return []
-        else:
-            return SensorValues.select().where(SensorValues.Sensor == sensor).order_by(SensorValues.Timestamp.desc()).limit(num).naive()
-
-    @staticmethod
-    def last(sensor, num):
-        last = sensorops._lastrecords(sensor, int(num))
+    def last(source, num):
+        last = source.lastrecords(int(num))
         if last:
-            return last.select().offset(num).dicts().get()['Value']
+            return last.select().offset(num).dicts().get()['value']
         else:
             return 0
 
     @staticmethod
-    def sumation(sensor, num):
-        selection = sensorops._lastrecords(sensor, num)
-        if last:
+    def sumation(source, num):
+        selection = source.lastrecords(int(num))
+        if selection:
             result = math.fsum((int(i.Value) for i in selection))
             return result
         else:
             return 0
 
     @staticmethod
-    def avg(sensor, num):
-        selection = sensorops._lastrecords(sensor, num)
+    def avg(source, num):
+        selection = source.lastrecords(int(num))
         if last:
             result = statistics.mean((int(i.Value) for i in selection))
             return result
@@ -503,58 +681,33 @@ class sensorops:
             return 0
 
     @staticmethod
-    def diff(sensor, args):
-        selection = sensorops._lastrecords(sensor, 2)
+    def diff(source, args):
+        selection = source.lastrecords(2)
         if selection:
             try:
                 result1 = float(selection[0].Value)
                 result2 = float(selection[1].Value)
             except:
-                raise sensorerror(sensor, 'could not convert values to floating point numbers')
+                raise sensorerror(source, 'could not convert values to floating point numbers')
             result = result1 - result2
         else:
             result = 0
         return result
 
-    def tdiff(sensor, args):
-        selection = sensorops._lastrecords(sensor, 2)
+    @staticmethod
+    def tdiff(source, args):
+        selection = source.lastrecords(2)
         if selection:
             result1 = selection[0]
             result2 = selection[1]
             print(type(result1.Timestamp))
-            result = (int(result1.Value) - int(result2.Value))/(result1.Timestamp - result2.Timestamp).total_seconds()
+            result = (int(result1.value) - int(result2.value))/(result1.timestamp - result2.timestamp).total_seconds()
         else:
             result = 0
         return result
 
-class triggerops:
 
-    @staticmethod
-    def operation(triggerfunction):
-        op = {
-        'last': triggerops.last,
-        #'avg':  triggerops.avg,
-        #'sum': triggerops.sumation,
-        #'diff': triggerops.diff,
-        #'tdiff': triggerops.tdiff,
-        }[triggerfunction.Function]
-        print('looking up value with')
-        return op(triggerfunction.Trigger, triggerfunction.Args)
-
-    @staticmethod
-    def _lastrecords(trigger, num):
-        return TriggerValues.select().where(TriggerValues.Trigger == trigger).order_by(TriggerValues.Timestamp.desc()).limit(num).naive()
-
-    @staticmethod
-    def last(trigger, num):
-        last = triggerops._lastrecords(trigger, int(num))
-        if last:
-            return last.select().offset(num).dicts().get()['Value']
-        else:
-            return 0
-    
-
-class sensorerror(Exception):                                    
+class sensorerror(Exception):
     def __init__(self, sensor, message):
         self.sensor = sensor
         self.message = message

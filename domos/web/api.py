@@ -1,6 +1,7 @@
 from flask import *
 from domos.util.db import *
 from domos.util.domossettings import domosSettings
+import peewee
 
 import json
 class api:
@@ -13,28 +14,38 @@ class api:
     def getmodules(self):
         db = dbhandler(domosSettings.getDBConfig())
         db.connect()
-        modules = dbhandler.getModules(db)
-        print(modules)
+        modules = Module.list()
         db.close()
         ret=[]
         for module in modules:
             print(module)
-            ret.append(module.jsjson())
+            ret.append(module.to_dict())
         print(ret)
         return json.dumps(ret)
     def getmodule(self,module_id):
         db = dbhandler(domosSettings.getDBConfig())
         db.connect()
-        module = db.getModuleByID(module_id)
-        print(module)
-        ret = module.jsjson()
+        try:
+            module = Module.get_by_id(module_id)
+        except DoesNotExist:
+            return ('404',404)
+        ret = module.to_dict()
         sensors = []
-        print(ret)
         for sensor in module.sensors:
-            sens=sensor.jsjson()
-            sens.pop('Module')
+            sens=sensor.to_dict()
             sensors.append(sens)
         ret['sensors']=sensors
+        rpcs = []
+        for rpc in module.rpcs:
+            r=rpc.to_dict()
+            r['RPCType']=r['RPCType'].to_dict()
+            args =[]
+            for arg in rpc.args:
+                a = arg.to_dict()
+                args.append(a)
+            r['args']=args
+            rpcs.append(r)
+        ret['rpcs']=rpcs
         print(ret)
         return json.dumps(ret)
             
