@@ -1,0 +1,53 @@
+
+<h3> Module: {{'{{module.name}}'}} </h3>
+<div>{{'{{module.descr}}'}}</div>
+ <accordion close-others="False">
+     <accordion-group is-open="status.opensensors">
+         <accordion-heading>
+           Sensors <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': status.opensensors, 'glyphicon-chevron-right': !status.opensensors}"></i>
+        </accordion-heading>
+        <table class="table table-striped table-hover">
+            <thead><tr>
+                <th>Id</th><th>Ident</th><th>Active</th><th>Instant</th>
+            </tr></thead>
+            <tbody>
+            <tr ng-repeat="sensor in module.sensors">
+                <td>{{'{{sensor.id}}'}}</td><td>{{'{{sensor.ident}}'}}</td>
+                <td>
+                    <toggle-button ng-model="sensor.Active"/>
+                </td>
+                <td>
+                    <toggle-button ng-model="sensor.Instant"/>
+                    
+                </td>    
+            </tr>
+            </tbody>
+        </table>
+    </accordion-group>
+    <accordion-group is-open="status.openrpc">
+        <accordion-heading>
+           RPCs <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': status.openrpc, 'glyphicon-chevron-right': !status.openrpc}"></i>
+        </accordion-heading>
+      <table class="table table-bordered table-hover">
+            <thead><tr>
+                <th>Id</th><th>Key</th><th>Active</th>
+            </tr></thead>
+            <tbody>
+            <tr ng-repeat-start="rpc in module.rpcs" ng-click="opened=!opened">
+                <td rowspan="{{'{{1+opened}}'}}">{{'{{rpc.id}}'}}</td><td>{{'{{rpc.Key}}'}}</td>
+                <td>
+                    <bool-icon ng-model="sensor.Active"/>
+                </td>                  
+            </tr>
+            <tr ng-repeat-end ng-show="opened">
+                <td colspan="2">
+                    <div>
+                        <H1> test </h1>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </accordion-group>
+  </accordion>
+

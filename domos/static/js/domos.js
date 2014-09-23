@@ -85,4 +85,18 @@ angular
             load()   
             
         }
-    ])
+    ]).directive('toggleButton', function() {
+    return {
+      restrict: 'E',
+      scope: {
+          model:'=ngModel'
+      },
+      templateUrl: 'content/togglebutton'
+    }}).directive('boolIcon', function() {
+    return {
+      restrict: 'E',
+      scope: {
+          model:'=value'
+      },
+      template: "<span class=\"glyphicon\" ng-class=\"{'glyphicon-ok':model, 'glyphicon-remove': !model}\"></span>"
+    }})
