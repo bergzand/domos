@@ -28,19 +28,15 @@ class BaseModel(Model):
         return cls.get(cls.id == num)
 
     def to_dict(self, **kwargs):
-        print(self.__class__)
         if issubclass(self.__class__, BaseModel):
             ts = super(self.__class__, self).translations
         else:
             ts = []
         t = ts+self.translations
-        print(t)
         d = {name: getattr(self, variable) for variable, name in t}
         if 'deep' in kwargs:
-            print(kwargs['deep'])
             for parameter in kwargs['deep']:
                 dd = list(kwargs['deep'])
-                print('deeping ' + parameter)
                 if(hasattr(self, parameter)):
                     dd.remove(parameter)
                     if type(getattr(self, parameter)) is peewee.SelectQuery:
@@ -51,28 +47,28 @@ class BaseModel(Model):
         return d
 
     def from_dict(self,dict,**kwargs):
-        print(self.__class__)
+        #print(self.__class__)
         if issubclass(self.__class__, BaseModel):
             ts = super(self.__class__, self).translations
         else:
             ts = []
         t = ts+self.translations
-        print(t)
+        #print(t)
         for variable, name in t:
             setattr(self, variable, dict[name])
         if 'deep' in kwargs:
             for parameter in kwargs['deep']:
                 dd = list(kwargs['deep'])
                 if(hasattr(self, parameter)):
-                    print('deeping ' + parameter)
+                    #print('deeping ' + parameter)
                     dd.remove(parameter)
                     if type(getattr(self, parameter)) is peewee.SelectQuery:
-                        print('islist')
+                        #print('islist')
                         setattr(self, parameter,[])
                         for i in dict[parameter] :
                              getattr(self,parameter).append(Sensor().from_dict(i, deep = dd))
                     else:
-                        print('isvariable')
+                        #print('isvariable')
                         getattr(self, parameter).from_dict(dict[parameter], deep = dd)
         return self
 
