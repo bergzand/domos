@@ -103,7 +103,7 @@ class Module(BaseModel):
     def list(cls):
         """returns a list of modules
         """
-        return [module for module in module.select()]
+        return [module for module in Module.select()]
 
     @classmethod
     def get_by_name(cls, name):
@@ -126,7 +126,7 @@ class RPCType(BaseModel):
 
 
 class ModuleRPC(BaseModel):
-    """RPC a :class:`Module` supports. 
+    """RPC a :class:`Module` supports.
 
     * Module: foreign key to a :class:`Module`
     * RPCType: foreign, the type of :class:`RPCType`
@@ -208,7 +208,7 @@ class RPCArg(BaseModel):
 class Sensor(BaseModel):
     """Sensor to measure
     
-    * module: :class:`Module` associated with the sensor
+    * modulerpc: :class:`ModuleRPC` associated with the sensor
     * ident: identifier of the sensor
     * active: Whether the sensor is active or disabled
     * instant: is the sensor of the type Instant
@@ -217,7 +217,7 @@ class Sensor(BaseModel):
                     ('active', 'active'),
                     ('instant', 'instant'),
                     ('desc', 'des')]
-    module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
+    modulerpc = ForeignKeyField(ModuleRPC, related_name='sensors', on_delete='CASCADE')
     name = CharField()
     active = BooleanField(default=True)
     instant = BooleanField(default=False)
@@ -252,7 +252,7 @@ class Sensor(BaseModel):
         :param module: The :class:`Module` object or ID to
         :rtype: An iterator with :class:`Sensor` classes
         """
-        return Sensor.select(Sensor, Module).join(Module).where(Sensor.module == module)
+        return Sensor.select(Sensor, ModuleRPC).join(ModuleRPC).where(ModuleRPC.module == module)
 
     @classmethod
     def get_by_name(cls, name):
@@ -304,7 +304,11 @@ class SensorValue(BaseModel):
         order_by = ('-Timestamp',)
         indexes = (
             (('Sensor', 'Timestamp'), True)
-            )
+        )
+
+    @classmethod
+    def insert_many(cls, rows):
+        return super().insert_many(rows)
 
 
 class SensorArg(BaseModel):
@@ -455,8 +459,8 @@ class Trigger(BaseModel):
             else:
                 rtn = self.lastvalue
         return rtn
-            
-        
+
+
 class TriggerValue(BaseModel):
     """values of triggers
     
@@ -511,11 +515,11 @@ class VarTrigger(BaseModel):
 
 class Action(BaseModel):
     """Actions to send to a module
-    module: The :class:`Module` to send the action to
+    modulerpc: The :class:`ModuleRPC` to send the action to
     ident: Identifier for this action
     """
     translations = [('name', 'name')]
-    module = ForeignKeyField(Module, related_name='actions')
+    modulerpc = ForeignKeyField(ModuleRPC, related_name='actions')
     name = CharField()
 
 

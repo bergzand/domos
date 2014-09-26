@@ -162,9 +162,9 @@ class actionhandler(threading.Thread):
     def _callaction(self, action):
         args = ActionArg.get_dict(action, self.calculator)
         pprint(args)
-        module = action.module
+        module = action.modulerpc.module
         self.rpc.fire(module.queue,
-                      ModuleRPC.get_by_module(module, type='set')[0].key,
+                      action.modulerpc.key,
                       **args)
 
     def processitem(self, item):
