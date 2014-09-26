@@ -3,7 +3,7 @@ import domos.util.domossettings as ds
 from domos.util.domossettings import domosSettings
 import domos.util.domoslog as domoslog
 from domos.util.rpc import rpc
-from domos.modules.domosTime import domosTime
+from domos.modules.DomosTime import DomosTime
 from domos.handlers import *
 import threading
 import multiprocessing
@@ -235,7 +235,7 @@ class domos:
             logger.end()
         else:
             msgh.start()
-            dt = domosTime()
+            dt = DomosTime()
             dt.start()
             msgh.rpc.log_info('waiting for modules to register')
             msgh.join()
