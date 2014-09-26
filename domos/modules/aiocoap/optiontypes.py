@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -9,6 +9,7 @@
 import abc
 import collections
 import struct
+
 
 class OptionType(metaclass=abc.ABCMeta):
     """Interface for decoding and encoding option values
@@ -42,6 +43,7 @@ class OptionType(metaclass=abc.ABCMeta):
 
         return len(self.encode())
 
+
 class StringOption(OptionType):
     """String CoAP option - used to represent string options."""
 
@@ -59,7 +61,9 @@ class StringOption(OptionType):
 
     def _length(self):
         return len(self.value.encode('utf-8'))
+
     length = property(_length)
+
 
 class OpaqueOption(OptionType):
     """Opaque CoAP option - used to represent opaque options."""
@@ -77,6 +81,7 @@ class OpaqueOption(OptionType):
 
     def _length(self):
         return len(self.value)
+
     length = property(_length)
 
 
@@ -103,6 +108,7 @@ class UintOption(OptionType):
             return (self.value.bit_length() - 1) // 8 + 1
         else:
             return 0
+
     length = property(_length)
 
 
@@ -110,6 +116,7 @@ class BlockOption(OptionType):
     """Block CoAP option - special option used only for Block1 and Block2 options.
        Currently it is the only type of CoAP options that has
        internal structure."""
+
     class BlockwiseTuple(collections.namedtuple('_BlockwiseTuple', ['block_number', 'more', 'size_exponent'])):
         @property
         def size(self):
@@ -124,7 +131,8 @@ class BlockOption(OptionType):
             self._value = self.BlockwiseTuple._make(value)
         self.number = number
 
-    value = property(lambda self: self._value, lambda self, value: setattr(self, '_value', self.BlockwiseTuple._make(value)))
+    value = property(lambda self: self._value,
+                     lambda self, value: setattr(self, '_value', self.BlockwiseTuple._make(value)))
 
     def encode(self):
         as_integer = (self.value.block_number << 4) + (self.value.more * 0x08) + self.value.size_exponent
@@ -135,8 +143,10 @@ class BlockOption(OptionType):
         as_integer = 0
         for byte in rawdata:
             as_integer = (as_integer * 256) + byte
-        self.value = self.BlockwiseTuple(block_number=(as_integer >> 4), more=bool(as_integer & 0x08), size_exponent=(as_integer & 0x07))
+        self.value = self.BlockwiseTuple(block_number=(as_integer >> 4), more=bool(as_integer & 0x08),
+                                         size_exponent=(as_integer & 0x07))
 
     def _length(self):
         return ((self.value[0].bit_length() + 3) // 8 + 1)
+
     length = property(_length)

@@ -16,10 +16,9 @@ from domos.util.db import *
 
 
 class messagehandler(threading.Thread):
-
     def __init__(self):
         """Create the core messagehandler. Also starts up depending threads
-        """ 
+        """
         threading.Thread.__init__(self)
         self.shutdown = False
         self.name = 'domoscore'
@@ -56,7 +55,6 @@ class messagehandler(threading.Thread):
             self.apihandler.start()
         else:
             self.shutdown = True
-        
 
     def register(self, data=None):
         """RPC function to register a module
@@ -66,28 +64,27 @@ class messagehandler(threading.Thread):
         returnvalue = False
         try:
             module = Module.get_by_name(data['name'])
-            
+
         except DoesNotExist:
             module = Module.add(name=data['name'], queue=data['queue'])
             for rpc in data['rpc']:
                 argslist = []
                 if "args" in rpc:
-                    
                     argslist = [(arg['name'],
-                                arg['type'],
-                                arg.get('optional', False),
-                                arg.get('descr', None)) for arg in rpc['args']]
+                                 arg['type'],
+                                 arg.get('optional', False),
+                                 arg.get('descr', None)) for arg in rpc['args']]
                 ModuleRPC.add(module, rpc['key'], rpc['type'], argslist)
         else:
             self.logger.debug("Sending sensors to module")
             sensors = Sensor.get_by_module(module)
             module.active = True
             module.save()
-            #TODO fix
+            # TODO fix
             return [SensorArg.get_dict(sensor) for sensor in sensors]
 
     def addSensor(self, module_id=0, data=None, send=False):
-        #add sensor to the database, if send is True, also send it to the module
+        # add sensor to the database, if send is True, also send it to the module
         self.logger.info('adding sensor from module {0} with ident {1}'.format(module_id, data['ident']))
         module = Module.get_by_id(module_id)
         sensor = Sensor.add(module, data['ident'], data)
@@ -110,12 +107,12 @@ class messagehandler(threading.Thread):
         """
 
         try:
-            self.logger.debug('logging trigger value for {0} with value {1}'.format(key,value))
+            self.logger.debug('logging trigger value for {0} with value {1}'.format(key, value))
             Sensor.get_by_id(key).add_value(value)
         except Exception as e:
             self.logger.warn('Something went wrong registering trigger value for {0}: {1}'.format(key, e))
         else:
-            #lauch trigger checks
+            # lauch trigger checks
             self.logger.debug('posting sensordata to trigger processor')
             self.triggerqueue.put(("sensor", key, value))
 
@@ -133,7 +130,6 @@ class messagehandler(threading.Thread):
 
 
 class apihandler(threading.Thread):
-
     def __init__(self):
         """Create a api handler. This is automaticaly build from the messagehandler
         """
@@ -176,7 +172,7 @@ class apihandler(threading.Thread):
                 return None
         else:
             sensors = self.db.getSensors()
-        #convert to list of tuples
+        # convert to list of tuples
         return [(sensor.ident,
                  sensor.Instant,
                  sensor.Active,
@@ -243,11 +239,12 @@ class domos:
             dt.start()
             msgh.rpc.log_info('waiting for modules to register')
             msgh.join()
+
     @staticmethod
     def parsersettings(parser):
-        
+
         parser.add_argument('--verbose', '-v', action='count',
-                              help='Verbosity of the server')
+                            help='Verbosity of the server')
         parser.add_argument('--daemon', '-d', action='store_true',
-                              help='Verbosity of the server')
+                            help='Verbosity of the server')
         return parser

@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -14,6 +14,7 @@ import ipaddress
 
 from .numbers import *
 from .options import Options
+
 
 class Message(object):
     """A CoAP Message."""
@@ -193,7 +194,7 @@ class Message(object):
         if port == COAP_PORT:
             netloc = host
         else:
-            netloc = "%s:%s"%(host, port)
+            netloc = "%s:%s" % (host, port)
 
         if self.requested_path is not None:
             path = self.requested_path
@@ -201,7 +202,7 @@ class Message(object):
             path = self.opt.uri_path
         path = '/'.join(("",) + path) or '/'
 
-        params = "" # are they not there at all?
+        params = ""  # are they not there at all?
 
         if self.requested_query is not None:
             query = self.requested_query
@@ -239,7 +240,8 @@ class Message(object):
             self.opt.uri_query = []
 
         # FIXME have to select remote now, that's not nice (happy eyeballs anyone?)
-        self.remote = (yield from asyncio.get_event_loop().getaddrinfo(parsed.hostname, parsed.port or COAP_PORT))[0][-1]
+        self.remote = (yield from asyncio.get_event_loop().getaddrinfo(parsed.hostname, parsed.port or COAP_PORT))[0][
+            -1]
 
         self.opt.uri_host = parsed.hostname
 

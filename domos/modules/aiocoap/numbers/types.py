@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -14,11 +14,13 @@ in the `Type` object.
 
 from enum import IntEnum
 
+
 class Type(IntEnum):
-    CON = 0 # Confirmable
-    NON = 1 # Non-confirmable
-    ACK = 2 # Acknowledgement
-    RST = 3 # Reset
+    CON = 0  # Confirmable
+    NON = 1  # Non-confirmable
+    ACK = 2  # Acknowledgement
+    RST = 3  # Reset
+
 
 CON, NON, ACK, RST = Type.CON, Type.NON, Type.ACK, Type.RST
 

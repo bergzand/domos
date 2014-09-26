@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -10,6 +10,7 @@ from itertools import chain
 import struct
 
 from .numbers import *
+
 
 def _read_extended_field_value(value, rawdata):
     """Used to decode large values of option delta and option length
@@ -65,7 +66,8 @@ def _single_value_view(option_number, doc=None):
     def _deleter(self, option_number=option_number):
         self.delete_option(option_number)
 
-    return property(_getter, _setter, _deleter, doc or "Single-value view on the %s option."%option_number)
+    return property(_getter, _setter, _deleter, doc or "Single-value view on the %s option." % option_number)
+
 
 def _items_view(option_number, doc=None):
     """Generate a property for a given option number, where the option is
@@ -84,10 +86,12 @@ def _items_view(option_number, doc=None):
     def _deleter(self, value, option_number=option_number):
         self.delete_option(option_number)
 
-    return property(_getter, _setter, doc=doc or "Iterable view on the %s option."%option_number)
+    return property(_getter, _setter, doc=doc or "Iterable view on the %s option." % option_number)
+
 
 class Options(object):
     """Represent CoAP Header Options."""
+
     def __init__(self):
         self._options = {}
 

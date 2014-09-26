@@ -12,7 +12,8 @@ class rpc:
         else:
             self.loghandle = name
         dashiconfig = domosSettings.getExchangeConfig()
-        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'], sysname = dashiconfig['prefix'])
+        self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"], dashiconfig['exchange'],
+                                     sysname=dashiconfig['prefix'])
 
     def handle(self, func, handle):
         self.dashi.handle(func, handle)

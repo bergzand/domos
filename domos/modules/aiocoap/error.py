@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -11,12 +11,13 @@ Exception definitions for txThings CoAP library.
 """
 
 
-#import iot.coap
+# import iot.coap
 
 class Error(Exception):
     """
     Base exception for all exceptions that indicate a failed request
     """
+
 
 class NoResource(Error):
     """
@@ -61,21 +62,25 @@ class WaitingForClientTimedOut(Error):
     but client does nothing.
     """
 
+
 class ResourceChanged(Error):
     """
     The requested resource was modified during the request and could therefore
     not be received in a consistent state.
     """
 
+
 class UnexpectedBlock1Option(Error):
     """
     Raised when a server responds with block1 options that just don't match.
     """
 
+
 class UnexpectedBlock2(Error):
     """
     Raised when a server responds with another block2 than expected.
     """
+
 
 class MissingBlock2Option(Error):
     """
@@ -84,15 +89,18 @@ class MissingBlock2Option(Error):
     but response without Block2 option is received.
     """
 
+
 class NotObservable(Error):
     """
     The server did not accept the request to observe the resource.
     """
 
+
 class ObservationCancelled(Error):
     """
     The server claimed that it will no longer sustain the observation.
     """
+
 
 class UnparsableMessage(Error):
     """
