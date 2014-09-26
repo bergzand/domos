@@ -305,13 +305,10 @@ class SensorValue(BaseModel):
         indexes = (
             (('Sensor', 'Timestamp'), True)
         )
-<<<<<<< HEAD
 
     @classmethod
     def insert_many(cls, rows):
         return super().insert_many(rows)
-=======
->>>>>>> 42710f2ff251fb71c2fcdcf9953038be5e63f87b
 
 
 class SensorArg(BaseModel):
