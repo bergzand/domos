@@ -6,6 +6,7 @@ import abc
 import enum
 import asyncio
 
+
 class AsyncIterable(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     @asyncio.coroutine
@@ -18,6 +19,7 @@ class AsyncIterable(metaclass=abc.ABCMeta):
     def get_nowait(self):
         """Fetch the next item. This must only be called once after can_peek
         has returned True."""
+
 
 class QueueWithEnd(AsyncIterable):
     """A QueueWithEnd shares a Queue's behavior in that it gets fed with put
@@ -40,8 +42,9 @@ class QueueWithEnd(AsyncIterable):
 
     def __repr__(self):
         return "<%s %#x flag %s%s>" % (type(self).__name__, id(self), self._flag, " (%s)" %
-                self._value if self._flag in (self.Type.value,
-                    self.Type.exception) else "")
+                                                                                  self._value if self._flag in (
+            self.Type.value,
+            self.Type.exception) else "")
 
     # AsyncIterable interface
 
@@ -80,7 +83,7 @@ class QueueWithEnd(AsyncIterable):
     @asyncio.coroutine
     def _put(self, type, value):
         if self._ended:
-            raise asyncio.InvalidStateError("%s has already ended"%type(self).__name__)
+            raise asyncio.InvalidStateError("%s has already ended" % type(self).__name__)
         yield from self._queue.put((type, value))
 
     # a simple way to create a feeder with something like an explicit yield
@@ -104,8 +107,10 @@ class QueueWithEnd(AsyncIterable):
 
         def decorate(function):
             cofun = asyncio.coroutine(function)
+
             def wrapped(*args, **kwargs):
                 result = cls(maxsize=maxsize)
+
                 def guarding():
                     running = cofun(result.put, *args, **kwargs)
                     try:
@@ -114,9 +119,12 @@ class QueueWithEnd(AsyncIterable):
                         yield from result.put_exception(e)
                     else:
                         yield from result.finish()
+
                 asyncio.Task(guarding())
                 return result
+
             return wrapped
+
         return decorate
 
     @classmethod
@@ -156,6 +164,7 @@ class QueueWithEnd(AsyncIterable):
                         return
                 yield from merged._put(queue._flag, queue._value)
                 queue._flag = cls.Type.notpeeked
+
         for s in merged.subqueues:
             asyncio.async(feeder(s, merged))
 

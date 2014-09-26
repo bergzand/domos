@@ -1,15 +1,17 @@
-
 <form method="post" action="{{ login_url }}">
     <div ng-controller="LoginController">
-    <input type="hidden" name="next" value="{{ next }}" />
-    {% if csrf_token %}{# Support for flask-seasurf #}<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">{% endif %}
-    {% for field in form %}
-      <div class="input-group">
- 	 <span class="input-group-addon">{{field.label}}</span>
-          {{ field(class="form-control") }}
-      </div>
-    {% endfor %}
-    <div class="actions"><button class="btn primary" type="submit">Log in</button></div>
+        <input type="hidden" name="next" value="{{ next }}"/>
+        {% if csrf_token %}{# Support for flask-seasurf #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">{% endif %}
+        {% for field in form %}
+            <div class="input-group">
+                <span class="input-group-addon">{{ field.label }}</span>
+                {{ field(class="form-control") }}
+            </div>
+        {% endfor %}
+        <div class="actions">
+            <button class="btn primary" type="submit">Log in</button>
+        </div>
     </div>
 </form>
 

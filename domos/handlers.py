@@ -36,10 +36,10 @@ GRAMMAR = """
     pclose_sym: '\)';
     WHITESPACE: '[ \t]+' (%ignore);
 """
-    
+
+
 class triggerChecker(threading.Thread):
-    
-    def __init__(self, queue=None, loghandler=None, loglevel = None):
+    def __init__(self, queue=None, loghandler=None, loglevel=None):
         """
         triggerchecker thread class.
         keeps watching a queue for sensor or triggers that changed and
@@ -59,7 +59,7 @@ class triggerChecker(threading.Thread):
         if loghandler:
             self.logger.addHandler(loghandler)
         self.logger.debug("Initializing trigger checker thread")
-        
+
         self.grammar = Grammar(GRAMMAR)
         if not queue:
             self.q = qu.Queue()
@@ -84,16 +84,16 @@ class triggerChecker(threading.Thread):
         Set the queue to send triggers to for action checking
         """
         self.actionqueue = queue
-        
+
     def _checktrigger(self, trigger, item):
         """
         Checks a single trigger
         """
         type, id, value = item
         match = trigger.expression
-        #TODO: add function dict
+        # TODO: add function dict
         triggervalue = self.calculator.resolve(match, item)
-        print("New:",triggervalue,"old:",trigger.lastvalue)
+        print("New:", triggervalue, "old:", trigger.lastvalue)
         if trigger.lastvalue != triggervalue:
             self.logger.debug("Trigger {0} now has value {1}".format(trigger.id, triggervalue))
             trigger.add_value(triggervalue)
@@ -158,7 +158,7 @@ class actionhandler(threading.Thread):
 
     def getqueue(self):
         return self.q
-        
+
     def _callaction(self, action):
         args = ActionArg.get_dict(action, self.calculator)
         pprint(args)
@@ -168,7 +168,7 @@ class actionhandler(threading.Thread):
                       **args)
 
     def processitem(self, item):
-        #get all actions attached
+        # get all actions attached
         type, trigger, value = item
         actions = TriggerAction.get_by_trigger(trigger)
         #self.logger.debug("Found action with trigger".format(len(actions)))
@@ -183,7 +183,6 @@ class actionhandler(threading.Thread):
             if active:
                 self.logger.info("Calling action {}".format(action.action.name))
                 self._callaction(action.action)
-                
 
     def run(self):
         while not self.shutdown:
@@ -229,9 +228,9 @@ class matchcalculator:
                     dictval = float(dictval)
                 except:
                     pass
-                sensorvars[str(func.id)] = dictval 
+                sensorvars[str(func.id)] = dictval
         triggerfuncs = [func for func in expression.get_used_triggers()]
-        #TODO: add function dict
+        # TODO: add function dict
 
         def _convtriggervar(func):
             value = ops.operation(func)
@@ -240,9 +239,10 @@ class matchcalculator:
             except:
                 pass
             return value
+
         triggervars = {str(func.id):
                            _convtriggervar(func)
-                                for func in triggerfuncs}
+                       for func in triggerfuncs}
         return (sensorvars, triggervars)
 
     def resolve(self, expression, updateditem=None):
@@ -260,6 +260,7 @@ class Calc(STransformer):
     '''
     STransform class to resolve ASTrees from the parser.
     '''
+
     def transform(self, tree, sensvars=None, trigvars=None):
         self.sensvars = sensvars
         self.trigvars = trigvars
@@ -268,46 +269,46 @@ class Calc(STransformer):
     def _bin_operator(self, exp):
         arg1, operator_symbol, arg2 = exp.tail
         print(exp.tail)
-        operator_func = { '+': op.add,
-                          '-': op.sub,
-                          '*': op.mul,
-                          '/': op.truediv,
-                          '//': op.floordiv,
-                          '%': op.mod,
-                          '**': op.pow,
-                          '==': op.eq,
-                          '!=': op.ne,
-                          '<=': op.le,
-                          '>=': op.ge,
-                          '<' : op.lt,
-                          '>' : op.gt,
-                          '||': lambda arg1, arg2: float(op.truth(arg1) or op.truth(arg2)),
-                          '&&': lambda arg1, arg2: float(op.truth(arg1) and op.truth(arg2))}[operator_symbol]
+        operator_func = {'+': op.add,
+                         '-': op.sub,
+                         '*': op.mul,
+                         '/': op.truediv,
+                         '//': op.floordiv,
+                         '%': op.mod,
+                         '**': op.pow,
+                         '==': op.eq,
+                         '!=': op.ne,
+                         '<=': op.le,
+                         '>=': op.ge,
+                         '<': op.lt,
+                         '>': op.gt,
+                         '||': lambda arg1, arg2: float(op.truth(arg1) or op.truth(arg2)),
+                         '&&': lambda arg1, arg2: float(op.truth(arg1) and op.truth(arg2))}[operator_symbol]
 
         return operator_func(arg1, arg2)
 
     def _sens_operator(self, exp):
         sensorid = exp.tail[0][6:-2]
-        return self.sensvars.get(sensorid,0)
+        return self.sensvars.get(sensorid, 0)
 
     def _trig_operator(self, exp):
         triggerid = exp.tail[0][6:-2]
-        return self.trigvars.get(triggerid,0)
-    
+        return self.trigvars.get(triggerid, 0)
+
     def _macr_operator(self, exp):
-        return 4        #random dice roll
-    
-    number      = lambda self, exp: float(exp.tail[0])
+        return 4  # random dice roll
+
+    number = lambda self, exp: float(exp.tail[0])
     true_symbol = lambda self, exp: float(1)
     false_symbol = lambda self, exp: float(0)
-    neg         = lambda self, exp: op.neg(exp.tail[0])
+    neg = lambda self, exp: op.neg(exp.tail[0])
     __default__ = lambda self, exp: exp.tail[0]
-    sensor      = _sens_operator
-    trigger     = _trig_operator
-    macro       = _macr_operator
-    string      = lambda self, exp: str(exp.tail[0][1:-1])
+    sensor = _sens_operator
+    trigger = _trig_operator
+    macro = _macr_operator
+    string = lambda self, exp: str(exp.tail[0][1:-1])
     parenthesis = lambda self, exp: exp.tail[1]
-    
+
     add = _bin_operator
     mul = _bin_operator
     exp = _bin_operator

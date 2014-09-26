@@ -17,15 +17,15 @@ DOMOSTIME_DICT = {
     "queue": "domosTime",
     "rpc": [
         {"key": "getTimers", "type": "list"},
-        {"key": "getTimer", "type": "get", "args":[
+        {"key": "getTimer", "type": "get", "args": [
 
-            ]
+        ]
         },
-        {"key": "delTimer", "type": "del", "args":[
+        {"key": "delTimer", "type": "del", "args": [
 
-            ]
+        ]
         },
-        {"key": "addTimer", "type": "add", "args": [ 
+        {"key": "addTimer", "type": "add", "args": [
             {"name": "start.year", "type": "string", "optional": "True"},
             {"name": "start.month", "type": "string", "optional": "True"},
             {"name": "start.week", "type": "string", "optional": "True"},
@@ -49,16 +49,18 @@ DOMOSTIME_DICT = {
 
 
 class domosTime(Process):
-
     def __init__(self):
         Process.__init__(self)
         self.done = False
         self.name = 'domosTime'
         self._items = []
-       
+        self._sched = None
+        self.rpc = None
+
+
     def initScheduler(self):
-         self._sched = BackgroundScheduler()
-        
+        self._sched = BackgroundScheduler()
+
     def initrpc(self):
         self.rpc = rpc(self.name)
         self.rpc.handle(self.getJobs, "getTimers")
@@ -66,24 +68,24 @@ class domosTime(Process):
         self.rpc.handle(self.addJob, "addTimer")
         self.rpc.handle(self.delJob, "delTimer")
         self.logmsg('debug', 'Initializing scheduler')
-        
+
     def logmsg(self, level, msg):
         call = 'log_{}'.format(level)
         self.rpc.fire("log", 'log_debug', msg=msg, handle='DomosTime')
 
-    def addJob(self, key=None, 
+    def addJob(self, key=None,
                name=None, jobtype='Once',
                start=None, stop=None):
         returnvalue = False
         for job in self._items:
             if job['key'] == key:
-                #duplicate job found
+                # duplicate job found
                 break
         else:
-            #no duplicates found
+            # no duplicates found
             newjob = dict()
             if stop:
-                #True job
+                # True job
                 newjob['start'] = self._sched.add_job(self._jobTrue,
                                                       args=[key, name],
                                                       trigger='cron',
@@ -146,7 +148,7 @@ class domosTime(Process):
         self.rpc.log_debug("one job deletion requested")
         for job in self._items:
             if job['key'] == key:
-                #self._sched.unschedule_job(job['start'])
+                # self._sched.unschedule_job(job['start'])
                 if job['stop']:
                     self._sched.unschedule_job(job['stop'])
                 self._items.remove(job)
@@ -182,6 +184,7 @@ class domosTime(Process):
         self.rpc.log_info("starting RPC consumer")
         while not self.done:
             self.rpc.listen()
+
 
 if __name__ == '__main__':
     dt = domosTime()

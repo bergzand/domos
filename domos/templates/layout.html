@@ -1,8 +1,8 @@
 <!doctype html>
 <head>
-<title>Domos Web</title>
-<link rel=stylesheet type=text/css href="{{ url_for('static',filename='css/bootstrap.css')}}">
-<link rel=stylesheet type=text/css href="{{ url_for('static',filename='css/bootstrap-theme.css')}}">
+    <title>Domos Web</title>
+    <link rel=stylesheet type=text/css href="{{ url_for('static',filename='css/bootstrap.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static',filename='css/bootstrap-theme.css') }}">
 
 
 </head>
@@ -10,21 +10,21 @@
 
 
 <div class=page>
-  	{% block body %}{% endblock %}
+    {% block body %}{% endblock %}
 </div>
 {% if debug %}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="{{url_for('static',filename='js/bootstrap.js')}}"></script>
-    <script src="{{url_for('static',filename='js/angular.js')}}"></script>
-    <script src="{{url_for('static',filename='js/angular-route.js')}}"></script>
-    <script src="{{url_for('static',filename='js/ui-bootstrap-tpls-0.11.0.js')}}"></script>
-    <script src="{{url_for('static',filename='js/domos.js')}}"></script>
+    <script src="{{ url_for('static',filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/angular.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/angular-route.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/ui-bootstrap-tpls-0.11.0.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/domos.js') }}"></script>
 {% else %}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="{{url_for('static',filename='js/bootstrap.min.js')}}"></script>
-    <script src="{{url_for('static',filename='js/angular.min.js')}}"></script>
-    <script src="{{url_for('static',filename='js/angular-route.min.js')}}"></script>
-    <script src="{{url_for('static',filename='js/ui-bootstrap-tpls-0.11.0.min.js')}}"></script>
-    <script src="{{url_for('static',filename='js/domos.js')}}"></script>
+    <script src="{{ url_for('static',filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/angular.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/angular-route.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/ui-bootstrap-tpls-0.11.0.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/domos.js') }}"></script>
 {% endif %}
 </body>

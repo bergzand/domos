@@ -9,14 +9,14 @@ import socket
 import sys
 from pprint import pprint
 
+
 class rpclogger(Thread):
-    
     loglevel = {'debug': logging.DEBUG,
                 'info': logging.INFO,
                 'warning': logging.WARNING,
                 'error': logging.ERROR,
                 'critical': logging.CRITICAL}
-    
+
     def __init__(self):
         self.done = False
         Thread.__init__(self)
@@ -25,7 +25,7 @@ class rpclogger(Thread):
         self.logcfg = domosSettings.getLoggingConfig()
         self.dashi = DashiConnection(self.name, dashiconfig["amqp_uri"],
                                      dashiconfig['exchange'],
-                                     sysname = dashiconfig['prefix'])
+                                     sysname=dashiconfig['prefix'])
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger('Log')
         self.logchannels = []
@@ -37,7 +37,7 @@ class rpclogger(Thread):
             ch.setLevel(rpclogger.loglevel[level])
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
-        #register dashi handler functions
+        # register dashi handler functions
         self.dashi.handle(self.logrecord, "logrecord")
 
     def run(self):

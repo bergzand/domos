@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -18,6 +18,7 @@ the :class:`Code` class for details.
 """
 
 from ..util import ExtensibleIntEnum
+
 
 class Code(ExtensibleIntEnum):
     """Value for the CoAP "Code" field.
@@ -72,7 +73,7 @@ class Code(ExtensibleIntEnum):
     @property
     def dotted(self):
         """The numeric value three-decimal-digits (c.dd) form"""
-        return "%d.%02d"%divmod(self, 32)
+        return "%d.%02d" % divmod(self, 32)
 
     @property
     def name_printable(self):
@@ -83,17 +84,20 @@ class Code(ExtensibleIntEnum):
         if self.is_request() or self is self.EMPTY:
             return self.name
         elif self.is_response():
-            return "%s %s"%(self.dotted, self.name_printable)
+            return "%s %s" % (self.dotted, self.name_printable)
         else:
-            return "%d"%self
+            return "%d" % self
 
     def __repr__(self):
-        return '<Code %d "%s">'%(self, self)
+        return '<Code %d "%s">' % (self, self)
 
-    name = property(lambda self: self._name if hasattr(self, "_name") else "(unknown)", lambda self, value: setattr(self, "_name", value), doc="The constant name of the code (equals name_printable readable in all-caps and with underscores)")
+    name = property(lambda self: self._name if hasattr(self, "_name") else "(unknown)",
+                    lambda self, value: setattr(self, "_name", value),
+                    doc="The constant name of the code (equals name_printable readable in all-caps and with underscores)")
+
 
 for k in vars(Code):
     if isinstance(getattr(Code, k), Code):
         locals()[k] = getattr(Code, k)
 
-__all__ = ['Code'] + [k for (k,v) in locals().items() if isinstance(v, Code)]
+__all__ = ['Code'] + [k for (k, v) in locals().items() if isinstance(v, Code)]

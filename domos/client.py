@@ -3,8 +3,8 @@ from domos.util.tabulate import tabulate
 from pprint import pprint
 import argparse
 
-class client:
 
+class client:
     apikey = 'api'
 
     def __init__(self, args):
@@ -12,12 +12,12 @@ class client:
                             'list_sensors': self.getSensors,
                             'list_args': self.getSensorArgs,
                             'list_prototypes': self.getPrototype}
-        self.args=args
+        self.args = args
         self.rpc = rpc('client')
 
     def getModules(self):
         modules = self.rpc.call(client.apikey, 'getModules')
-        headers = ['Name','Queue','Active']
+        headers = ['Name', 'Queue', 'Active']
         print(tabulate(modules, headers, tablefmt="orgtbl"))
 
     def getSensors(self):
@@ -28,7 +28,8 @@ class client:
         else:
             headers = ['Name', 'Instant', 'Active', 'Module', 'Description']
             print(tabulate(sensors, headers, tablefmt="orgtbl"))
-    @staticmethod        
+
+    @staticmethod
     def parsersettings(parser):
         clientcommands = parser.add_subparsers(title='client commands', dest='clientcmd')
         clientcommands.add_parser('list_modules', help='List all registered modules')
@@ -38,11 +39,11 @@ class client:
         sensorcmds = clientcommands.add_parser('list_sensors', help='List sensors')
         sensorcmds.add_argument('--module', '-m', nargs='?', help='module to query, all modules if omitted')
 
-        argcmds = clientcommands.add_parser('list_args',  help='List sensor arguments')
+        argcmds = clientcommands.add_parser('list_args', help='List sensor arguments')
         argcmds.add_argument('sensor', nargs=1, help='sensor to query')
         return parser
-    
-    #tabulate recursive dicts to infinite depth
+
+    # tabulate recursive dicts to infinite depth
     def _parseArgs(self, argdict, firstrun=False):
         data = []
         for name, value in dict.items(argdict):
@@ -54,9 +55,9 @@ class client:
                         first = False
                         data.append([name, line])
                     else:
-                        data.append(['',line])
+                        data.append(['', line])
             else:
-                data.append(['{}:'.format(name),value])
+                data.append(['{}:'.format(name), value])
         if firstrun:
             table = tabulate(data, tablefmt='orgtbl')
         else:
@@ -73,11 +74,11 @@ class client:
     def getPrototype(self):
         module = self.args.module
         proto = self.rpc.call(client.apikey, 'getProtos', module=module)
-        headers = ['Name', 'Type','Optional','Description']
+        headers = ['Name', 'Type', 'Optional', 'Description']
         for rpcname, arguments in proto:
-            print(rpcname+':')
+            print(rpcname + ':')
             print(tabulate(arguments, headers, tablefmt='orgtbl'))
-          
+
     def main(self):
         try:
             command = self.commanddict[self.args.clientcmd]

@@ -1,12 +1,21 @@
-
 <h3> Modules </h3>
 <table class="table table-striped table-hover">
-    <thead><tr>
-            <th>Id</th><th>Name</th><th>Description</th><th>Active</th>
-    </tr></thead>
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Active</th>
+    </tr>
+    </thead>
     <tbody>
     <tr ng-repeat="module in modules" ng-click="openmodule(module)">
-        <td>{{'{{module.id}}'}}</td><td>{{'{{module.name}}'}}</td><td>{{'{{module.description}}'}}</td><td><bool-icon value="module.Active"></bool-icon></td>
+        <td>{{ '{{module.id}}' }}</td>
+        <td>{{ '{{module.name}}' }}</td>
+        <td>{{ '{{module.description}}' }}</td>
+        <td>
+            <bool-icon value="module.Active"></bool-icon>
+        </td>
     </tr>
     </tbody>
 </table>

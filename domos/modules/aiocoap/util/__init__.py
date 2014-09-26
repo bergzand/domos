@@ -1,15 +1,17 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
 
 """Tools not directly related with CoAP that are needed to provide the API"""
 
+
 class ExtensibleEnumMeta(type):
     """Metaclass for ExtensibleIntEnum, see there for detailed explanations"""
+
     def __init__(self, name, bases, dict):
         self._value2member_map_ = {}
         for k, v in dict.items():
@@ -31,6 +33,7 @@ class ExtensibleEnumMeta(type):
             self._value2member_map_[value] = super(ExtensibleEnumMeta, self).__call__(value)
         return self._value2member_map_[value]
 
+
 class ExtensibleIntEnum(int, metaclass=ExtensibleEnumMeta):
     """Similar to Python3.4's enum.IntEnum, this type can be used for named
     numbers which are not comprehensively known, like CoAP option numbers."""
@@ -39,4 +42,4 @@ class ExtensibleIntEnum(int, metaclass=ExtensibleEnumMeta):
         return type(self)(int(self) + delta)
 
     def __repr__(self):
-        return '<%s %d>'%(type(self).__name__, self)
+        return '<%s %d>' % (type(self).__name__, self)

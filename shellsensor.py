@@ -13,17 +13,19 @@ SHELLSENSOR_DICT = {
         {"key": "outputtoshell", "type": "set", "args": [
             {"name": "value", "type": "string"},
             {"name": "prefix", "type": "string", "optional": "True"}]}]
-    }
+}
 
 
-class dashiThread(Thread):
-
+class DashiThread(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.name = "shellsensor"
         self.rpc = rpc(self.name)
         self.done = False
-        #Registermessage
+        self.identifier = None
+        self.key = None
+        self.prompt = None
+        # Registermessage
         self.rpc.log_info("connecting")
         try:
             response = self.rpc.call("domoscore",
@@ -37,11 +39,11 @@ class dashiThread(Thread):
             self.rpc.handle(self.receive, "outputtoshell")
             for sensor in response:
                 self.addshellinput(**sensor)
-            #wait for add
+                # wait for add
 
-    def sendValue(self, value):
+    def sendvalue(self, value):
         if self.addaccepted:
-            self.rpc.log_debug("sending: "+str(value))
+            self.rpc.log_debug("sending: " + str(value))
             self.rpc.fire("domoscore",
                           "sensorValue",
                           key=self.key,
@@ -51,12 +53,12 @@ class dashiThread(Thread):
         self.identifier = name
         self.key = key
         self.prompt = prompt
-        self.rpc.log_info("registered as:{id} with key: {key}".format(id=self. identifier, key=self.key))
+        self.rpc.log_info("registered as:{id} with key: {key}".format(id=self.identifier, key=self.key))
         print(("registered as:{id} with key: {key}".format(id=self.identifier, key=self.key)))
         self.addaccepted = True
 
     def receive(self, key=None, name=None, value=None, prefix="Received: "):
-        print(prefix+str(value))
+        print(prefix + str(value))
         print(str(self.prompt))
 
     def run(self):
@@ -68,7 +70,7 @@ class dashiThread(Thread):
 
 
 def main():
-    dashithread = dashiThread()
+    dashithread = DashiThread()
     if not dashithread.addaccepted:
         print("unable to connect")
         return
@@ -76,11 +78,12 @@ def main():
     done = False
     while not done:
         line = input(dashithread.prompt)
-        if(line == "quit"):
+        if (line == "quit"):
             done = True
             dashithread.end()
         else:
-            dashithread.sendValue(line.strip())
+            dashithread.sendvalue(line.strip())
+
 
 if __name__ == "__main__":
     main()

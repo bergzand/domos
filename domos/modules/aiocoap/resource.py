@@ -1,8 +1,8 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) Twisted Matrix Laboratories,
-#               2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -47,7 +47,7 @@ class CoAPResource:
         self.children = {}
         self.params = {}
         self.visible = False
-        self.observers = {} # (address, token) -> observation
+        self.observers = {}  # (address, token) -> observation
 
     observable = False
     observe_index = 0
@@ -205,7 +205,7 @@ class CoAPResource:
         ## @TODO handle situations in which this gets called more often than
         #        2^32 times in 256 seconds (or document why we can be sure that
         #        that will not happen)
-        self.observe_index = (self.observe_index + 1) % (2**24)
+        self.observe_index = (self.observe_index + 1) % (2 ** 24)
 
         for o in self.observers.values():
             o.trigger()

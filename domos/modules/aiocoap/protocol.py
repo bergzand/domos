@@ -1,7 +1,7 @@
 # This file is part of the Python aiocoap library project.
 #
 # Copyright (c) 2012-2014 Maciej Wasilak <http://sixpinetrees.blogspot.com/>,
-#               2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
+# 2013-2014 Christian Amsüss <c.amsuess@energyharvesting.at>
 #
 # txThings is free software, this file is published under the MIT license as
 # described in the accompanying LICENSE file.
@@ -27,7 +27,7 @@ import logging
 # log levels used:
 # * debug is for things that occur even under perfect conditions.
 # * info is for things that are well expected, but might be interesting during
-#   testing a network of nodes and not debugging the library. (timeouts,
+# testing a network of nodes and not debugging the library. (timeouts,
 #   retransmissions, pings)
 # * warning is for everything that indicates a malbehaved client. (these don't
 #   necessarily indicate a client bug, though; things like requesting a
@@ -37,6 +37,7 @@ import logging
 from . import error
 from .numbers import *
 from .message import Message
+
 
 class Endpoint(asyncio.DatagramProtocol):
     """A single local CoAP endpoint
@@ -67,22 +68,23 @@ class Endpoint(asyncio.DatagramProtocol):
     If more control is needed, eg. with observations, create a
     :class:`Requester` yourself and pass the endpoint to it.
     """
+
     def __init__(self, loop=None, serversite=None, loggername="coap"):
         self.message_id = random.randint(0, 65535)
         self.token = random.randint(0, 65535)
         self.serversite = serversite
         self._recent_messages = {}  # recently received messages (remote, message-id): None or result-message
         self._active_exchanges = {}  # active exchanges i.e. sent CON messages (remote, message-id): (exchange monitor, cancellable timeout)
-        self._backlogs = {} # per-remote list of (backlogged package, exchange-monitor) tupless (keys exist iff there is an active_exchange with that node)
+        self._backlogs = {}  # per-remote list of (backlogged package, exchange-monitor) tupless (keys exist iff there is an active_exchange with that node)
         self.outgoing_requests = {}  # unfinished outgoing requests (identified by token and remote)
         self.incoming_requests = {}  # unfinished incoming requests (path-tuple, remote): Requester
-        self.outgoing_observations = {} # observations where this node is the client. (token, remote) -> ClientObservation
+        self.outgoing_observations = {}  # observations where this node is the client. (token, remote) -> ClientObservation
 
         self.log = logging.getLogger(loggername)
 
         self.loop = loop or asyncio.get_event_loop()
 
-        self.ready = asyncio.Future() # fullfilled by connection_made
+        self.ready = asyncio.Future()  # fullfilled by connection_made
 
     #
     # implementing the typical DatagramProtocol interfaces.
@@ -102,7 +104,7 @@ class Endpoint(asyncio.DatagramProtocol):
         try:
             message = Message.decode(data, address)
         except error.UnparsableMessage:
-            self.log.warning("Ignoring unparsable message from %s"%(address,))
+            self.log.warning("Ignoring unparsable message from %s" % (address,))
             return
 
         self._dispatch_message(message)
@@ -111,7 +113,7 @@ class Endpoint(asyncio.DatagramProtocol):
         """Implementation of the DatagramProtocol interface, called by the transport."""
         # TODO: set IP_RECVERR to receive icmp "destination unreachable (port
         # unreachable)" & co to stop retransmitting and err back quickly
-        self.log.error("Error received: %s"%exc)
+        self.log.error("Error received: %s" % exc)
 
     # pause_writing and resume_writing are not implemented, as the protocol
     # should take care of not flooding the output itself anyway (NSTART etc).
@@ -134,7 +136,7 @@ class Endpoint(asyncio.DatagramProtocol):
         if message.code is EMPTY and message.mtype is CON:
             self._process_ping(message)
         elif message.code is EMPTY and message.mtype in (ACK, RST):
-            pass # empty ack has already been handled above
+            pass  # empty ack has already been handled above
         elif message.code.is_request() and message.mtype in (CON, NON):
             # the request handler will have to deal with sending ACK itself, as
             # it might be timeout-related
@@ -153,7 +155,8 @@ class Endpoint(asyncio.DatagramProtocol):
                 rst.remote = message.remote
                 self.send_message(rst)
         else:
-            self.log.warning("Received a message with code %s and type %s (those don't fit) from %s, ignoring it."%(message.code, message.mtype, message.remote))
+            self.log.warning("Received a message with code %s and type %s (those don't fit) from %s, ignoring it." % (
+                message.code, message.mtype, message.remote))
 
     #
     # coap dispatch, message-id sublayer: duplicate handling
@@ -222,7 +225,8 @@ class Endpoint(asyncio.DatagramProtocol):
         key = (message.remote, message.mid)
 
         if key not in self._active_exchanges:
-            self.log.info("Received %s from %s, but could not match it to a running exchange."%(message.mtype, message.remote))
+            self.log.info(
+                "Received %s from %s, but could not match it to a running exchange." % (message.mtype, message.remote))
             return
 
         exchange_monitor, next_retransmission = self._active_exchanges.pop(key)
@@ -263,7 +267,8 @@ class Endpoint(asyncio.DatagramProtocol):
             retransmission_counter += 1
             timeout *= 2
 
-            next_retransmission = self.loop.call_later(timeout, self._retransmit, message, timeout, retransmission_counter)
+            next_retransmission = self.loop.call_later(timeout, self._retransmit, message, timeout,
+                                                       retransmission_counter)
             self._active_exchanges[key] = (exchange_monitor, next_retransmission)
             if exchange_monitor is not None:
                 exchange_monitor.retransmitted()
@@ -278,7 +283,7 @@ class Endpoint(asyncio.DatagramProtocol):
     #
 
     def _process_ping(self, message):
-        self.log.info('Received CoAP Ping from %s, replying with RST.'%(message.remote,))
+        self.log.info('Received CoAP Ping from %s, replying with RST.' % (message.remote,))
         rst = Message(mtype=RST, mid=message.mid, code=EMPTY, payload=b'')
         rst.remote = message.remote
         self.send_message(rst)
@@ -302,7 +307,8 @@ class Endpoint(asyncio.DatagramProtocol):
         depending on mtype), ans False if it was not expected (and should be
         RST'd)."""
 
-        self.log.debug("Received Response, token: %s, host: %s, port: %s" % (binascii.b2a_hex(response.token), response.remote[0], response.remote[1]))
+        self.log.debug("Received Response, token: %s, host: %s, port: %s" % (
+            binascii.b2a_hex(response.token), response.remote[0], response.remote[1]))
 
         if (response.token, response.remote) in self.outgoing_requests:
             self.outgoing_requests.pop((response.token, response.remote)).handle_response(response)
@@ -342,7 +348,7 @@ class Endpoint(asyncio.DatagramProtocol):
             message.mid = self._next_message_id()
 
         if message.remote in self._backlogs:
-            self.log.debug("Message to %s put into backlog"%(message.remote,))
+            self.log.debug("Message to %s put into backlog" % (message.remote,))
             if exchange_monitor is not None:
                 exchange_monitor.enqueued()
             self._backlogs[message.remote].append((message, exchange_monitor))
@@ -376,7 +382,7 @@ class Endpoint(asyncio.DatagramProtocol):
         #TODO: add proper Token handling
         token = self.token
         self.token = (self.token + 1) & 0xffffffffffffffff
-        return binascii.a2b_hex("%08x"%self.token)
+        return binascii.a2b_hex("%08x" % self.token)
 
     #
     # convenience methods for class instanciation
@@ -425,11 +431,13 @@ class Endpoint(asyncio.DatagramProtocol):
 
         loop = asyncio.get_event_loop()
 
-        transport, protocol = yield from loop.create_datagram_endpoint(lambda: cls(loop, site, loggername="coap-server"), ('127.0.0.1', COAP_PORT))
+        transport, protocol = yield from loop.create_datagram_endpoint(
+            lambda: cls(loop, site, loggername="coap-server"), ('127.0.0.1', COAP_PORT))
 
         yield from protocol.ready
 
         return protocol
+
 
 class Requester(object):
     """Class used to handle single outgoing request.
@@ -503,7 +511,8 @@ class Requester(object):
             timeout = self.protocol.loop.call_later(REQUEST_TIMEOUT, timeout_request)
             self.protocol.outgoing_requests[(request.token, request.remote)] = self
 
-            self.log.debug("Sending request - Token: %s, Remote: %s" % (binascii.b2a_hex(request.token).decode('ascii'), request.remote))
+            self.log.debug("Sending request - Token: %s, Remote: %s" % (
+                binascii.b2a_hex(request.token).decode('ascii'), request.remote))
 
     def handle_response(self, response):
         if not self._request_transmitted_completely:
@@ -516,22 +525,25 @@ class Requester(object):
 
         if response.opt.block1 is None:
             # it's not up to us here to 
-            if response.code.is_successful(): # an error like "unsupported option" would be ok to return, but success?
+            if response.code.is_successful():  # an error like "unsupported option" would be ok to return, but success?
                 self.log.warning("Block1 option completely ignored by server, assuming it knows what it is doing.")
             self.process_block2_in_response(response)
             return
 
         block1 = response.opt.block1
-        self.log.debug("Response with Block1 option received, number = %d, more = %d, size_exp = %d." % (block1.block_number, block1.more, block1.size_exponent))
+        self.log.debug("Response with Block1 option received, number = %d, more = %d, size_exp = %d." % (
+            block1.block_number, block1.more, block1.size_exponent))
 
         if block1.block_number != self.app_request.opt.block1.block_number:
             self.response.set_exception(UnexpectedBlock1Option())
 
         if block1.size_exponent < self.app_request.opt.block1.size_exponent:
-            next_number = (self.app_request.opt.block1.block_number + 1) * 2 ** (self.app_request.opt.block1.size_exponent - block1.size_exponent)
+            next_number = (self.app_request.opt.block1.block_number + 1) * 2 ** (
+                self.app_request.opt.block1.size_exponent - block1.size_exponent)
             next_block = self.app_request._extract_block(next_number, block1.size_exponent)
         else:
-            next_block = self.app_request._extract_block(self.app_request.opt.block1.block_number + 1, block1.size_exponent)
+            next_block = self.app_request._extract_block(self.app_request.opt.block1.block_number + 1,
+                                                         block1.size_exponent)
 
         if next_block is not None:
             self.app_request.opt.block1 = next_block.opt.block1
@@ -552,7 +564,8 @@ class Requester(object):
 
         if response.opt.block2 is not None:
             block2 = response.opt.block2
-            self.log.debug("Response with Block2 option received, number = %d, more = %d, size_exp = %d." % (block2.block_number, block2.more, block2.size_exponent))
+            self.log.debug("Response with Block2 option received, number = %d, more = %d, size_exp = %d." % (
+                block2.block_number, block2.more, block2.size_exponent))
             if self._assembled_response is not None:
                 try:
                     self._assembled_response._append_response_block(response)
@@ -570,7 +583,8 @@ class Requester(object):
                 self.handle_final_response(self._assembled_response)
         else:
             if self._assembled_response is not None:
-                self.log.warning("Server sent non-blockwise response after having started a blockwise transfer. Blockwise transfer cancelled, accepting single response.")
+                self.log.warning(
+                    "Server sent non-blockwise response after having started a blockwise transfer. Blockwise transfer cancelled, accepting single response.")
             self.handle_final_response(response)
 
     def handle_final_response(self, response):
@@ -598,6 +612,7 @@ class Requester(object):
         else:
             self.observation._register(self.protocol.outgoing_observations, (response.token, response.remote))
 
+
 class MulticastRequester(object):
     def __init__(self, protocol, request):
         self.protocol = protocol
@@ -620,7 +635,8 @@ class MulticastRequester(object):
             return
 
         self.protocol.outgoing_requests[(request.token, None)] = self
-        self.log.debug("Sending multicast request - Token: %s, Remote: %s" % (binascii.b2a_hex(request.token).decode('ascii'), request.remote))
+        self.log.debug("Sending multicast request - Token: %s, Remote: %s" % (
+            binascii.b2a_hex(request.token).decode('ascii'), request.remote))
 
         self.protocol.loop.call_later(MULTICAST_REQUEST_TIMEOUT, self._timeout)
 
@@ -634,6 +650,7 @@ class MulticastRequester(object):
     def _timeout(self):
         self.protocol.outgoing_requests.pop(self.request.token, None)
         self.responses.finish()
+
 
 class Responder(object):
     """Handler for an incoming request or (in blockwise) a group thereof
@@ -670,7 +687,7 @@ class Responder(object):
         asyncio.Task(self.dispatch_request())
 
     def handle_next_request(self, request):
-        if self._next_block_timeout is not None: # that'd be the case only for the first time
+        if self._next_block_timeout is not None:  # that'd be the case only for the first time
             self._next_block_timeout.cancel()
 
         if self.app_request.done() == False:
@@ -686,7 +703,8 @@ class Responder(object):
         scheduling itself again."""
         if request.opt.block1 is not None:
             block1 = request.opt.block1
-            self.log.debug("Request with Block1 option received, number = %d, more = %d, size_exp = %d." % (block1.block_number, block1.more, block1.size_exponent))
+            self.log.debug("Request with Block1 option received, number = %d, more = %d, size_exp = %d." % (
+                block1.block_number, block1.more, block1.size_exponent))
             if block1.block_number == 0:
                 #TODO: Check if resource is available - if not send error immediately
                 #TODO: Check if method is allowed - if not send error immediately
@@ -694,7 +712,8 @@ class Responder(object):
                 self._assembled_request = request
             else:
                 if self._assembled_request is None:
-                    self.respond_with_error(request, REQUEST_ENTITY_INCOMPLETE, "Beginning of block1 transaction unknown to server")
+                    self.respond_with_error(request, REQUEST_ENTITY_INCOMPLETE,
+                                            "Beginning of block1 transaction unknown to server")
                     return
 
                 try:
@@ -715,7 +734,8 @@ class Responder(object):
                 self.app_request.set_result(self._assembled_request)
         else:
             if self._assembled_request is not None:
-                self.log.warning("Non-blockwise request received during blockwise transfer. Blockwise transfer cancelled, responding to single request.")
+                self.log.warning(
+                    "Non-blockwise request received during blockwise transfer. Blockwise transfer cancelled, responding to single request.")
             self.app_request.set_result(request)
 
     @asyncio.coroutine
@@ -752,7 +772,7 @@ class Responder(object):
             try:
                 response = yield from unfinished_response
             except Exception as e:
-                self.log.error("An exception occurred while rendering a resource: %r"%e)
+                self.log.error("An exception occurred while rendering a resource: %r" % e)
                 response = Message(code=INTERNAL_SERVER_ERROR)
 
             if resource.observable and request.code == GET and request.opt.observe is not None:
@@ -763,7 +783,7 @@ class Responder(object):
     def respond_with_error(self, request, code, payload):
         """Helper method to send error response to client."""
         payload = payload.encode('ascii')
-        self.log.info("Sending error response: %r"%payload)
+        self.log.info("Sending error response: %r" % payload)
         response = Message(code=code, payload=payload)
         self.respond(response, request)
 
@@ -777,7 +797,8 @@ class Responder(object):
         if delayed_ack is not None:
             delayed_ack.cancel()
         self.app_response = app_response
-        size_exp = min(request.opt.block2.size_exponent if request.opt.block2 is not None else DEFAULT_BLOCK_SIZE_EXP, DEFAULT_BLOCK_SIZE_EXP)
+        size_exp = min(request.opt.block2.size_exponent if request.opt.block2 is not None else DEFAULT_BLOCK_SIZE_EXP,
+                       DEFAULT_BLOCK_SIZE_EXP)
         if len(self.app_response.payload) > (2 ** (size_exp + 4)):
             first_block = self.app_response._extract_block(0, size_exp)
             self.app_response.opt.block2 = first_block.opt.block2
@@ -793,7 +814,8 @@ class Responder(object):
 
         if request.opt.block2 is not None:
             block2 = request.opt.block2
-            self.log.debug("Request with Block2 option received, number = %d, more = %d, size_exp = %d." % (block2.block_number, block2.more, block2.size_exponent))
+            self.log.debug("Request with Block2 option received, number = %d, more = %d, size_exp = %d." % (
+                block2.block_number, block2.more, block2.size_exponent))
 
             next_block = self.app_response._extract_block(block2.block_number, block2.size_exponent)
             if next_block is None:
@@ -807,7 +829,8 @@ class Responder(object):
                 self.send_final_response(next_block, request)
         else:
             # TODO is this the right error code here?
-            self.respond_with_error(request, REQUEST_ENTITY_INCOMPLETE, "Requests after a block2 response must carry the block2 option.")
+            self.respond_with_error(request, REQUEST_ENTITY_INCOMPLETE,
+                                    "Requests after a block2 response must carry the block2 option.")
 
     def send_non_final_response(self, response, request):
         """Helper method to send a response to client, and setup a timeout for
@@ -822,7 +845,8 @@ class Responder(object):
             self.app_request.cancel()
 
         # we don't want to have this incoming request around forever
-        self._next_block_timeout = self.protocol.loop.call_later(MAX_TRANSMIT_WAIT, timeout_non_final_response, self, key)
+        self._next_block_timeout = self.protocol.loop.call_later(MAX_TRANSMIT_WAIT, timeout_non_final_response, self,
+                                                                 key)
         self.protocol.incoming_requests[key] = self
 
         self.send_response(response, request)
@@ -861,7 +885,7 @@ class Responder(object):
             else:
                 response.mtype = ACK
         if response.mid is None and response.mtype in (ACK, RST):
-                response.mid = request.mid
+            response.mid = request.mid
         self.log.debug("Sending response, type = %s (request type = %s)" % (response.mtype, request.mtype))
         self.protocol.send_message(response, self._exchange_monitor_factory(request))
 
@@ -895,7 +919,7 @@ class Responder(object):
             return
 
         if observation_identifier in resource.observers:
-            pass ## @TODO renew that observation (but keep in mind that whenever we send a notification, the original message is replayed)
+            pass  ## @TODO renew that observation (but keep in mind that whenever we send a notification, the original message is replayed)
         else:
             ServerObservation(self.protocol, request, self.log, observation_identifier, resource)
 
@@ -904,6 +928,7 @@ class Responder(object):
         if request.mtype is None:
             # this is the indicator that the request was just injected
             app_response.mtype = CON
+
 
 class ExchangeMonitor(object):
     """Callback collection interface to keep track of what happens to an
@@ -915,11 +940,17 @@ class ExchangeMonitor(object):
     was a CON."""
 
     def enqueued(self): pass
+
     def sent(self): pass
+
     def retransmitted(self): pass
+
     def timeout(self): pass
+
     def rst(self): pass
+
     def response(self, message): pass
+
 
 class ServerObservation(object):
     """An active CoAP observation inside a server is described as a
@@ -940,7 +971,7 @@ class ServerObservation(object):
 
     def trigger(self):
         # bypassing parsing and duplicate detection, pretend the request came in again
-        self.log.debug("Server observation triggered, injecting original request %r again"%self.original_request)
+        self.log.debug("Server observation triggered, injecting original request %r again" % self.original_request)
         # TODO this indicates that the request is injected -- overloading .mtype is not the cleanest thing to do hee
         self.original_request.mtype = None
         self.original_request.mid = None
@@ -970,6 +1001,7 @@ class ServerObservation(object):
 
         # TODO: this should pause/resume furter notifications
         def enqueued(self): pass
+
         def sent(self): pass
 
         def rst(self):
@@ -979,6 +1011,7 @@ class ServerObservation(object):
         def timeout(self):
             self.observation.log.debug("Observation received timeout, cancelling")
             self.observation.cancel()
+
 
 class ClientObservation(object):
     def __init__(self, original_request):

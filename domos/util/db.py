@@ -1,4 +1,3 @@
-
 from peewee import *
 import datetime
 import math
@@ -9,7 +8,7 @@ dbconn = Proxy()
 
 rpctypes = ['list', 'get', 'del', 'add', 'set']
 
-#Peewee database models
+# Peewee database models
 
 
 class BaseModel(Model):
@@ -32,45 +31,46 @@ class BaseModel(Model):
             ts = super(self.__class__, self).translations
         else:
             ts = []
-        t = ts+self.translations
+        t = ts + self.translations
         d = {name: getattr(self, variable) for variable, name in t}
         if 'deep' in kwargs:
             for parameter in kwargs['deep']:
                 dd = list(kwargs['deep'])
-                if(hasattr(self, parameter)):
+                if (hasattr(self, parameter)):
                     dd.remove(parameter)
                     if type(getattr(self, parameter)) is peewee.SelectQuery:
-                        l = [i.to_dict(deep = dd) for i in getattr(self, parameter)]
+                        l = [i.to_dict(deep=dd) for i in getattr(self, parameter)]
                     else:
-                        l =  getattr(self, parameter).to_dict()
-                    d.update({parameter:l})
+                        l = getattr(self, parameter).to_dict()
+                    d.update({parameter: l})
         return d
 
-    def from_dict(self,dict,**kwargs):
+    def from_dict(self, dict, **kwargs):
         #print(self.__class__)
         if issubclass(self.__class__, BaseModel):
             ts = super(self.__class__, self).translations
         else:
             ts = []
-        t = ts+self.translations
+        t = ts + self.translations
         #print(t)
         for variable, name in t:
             setattr(self, variable, dict[name])
         if 'deep' in kwargs:
             for parameter in kwargs['deep']:
                 dd = list(kwargs['deep'])
-                if(hasattr(self, parameter)):
+                if (hasattr(self, parameter)):
                     #print('deeping ' + parameter)
                     dd.remove(parameter)
                     if type(getattr(self, parameter)) is peewee.SelectQuery:
                         #print('islist')
-                        setattr(self, parameter,[])
-                        for i in dict[parameter] :
-                             getattr(self,parameter).append(Sensor().from_dict(i, deep = dd))
+                        setattr(self, parameter, [])
+                        for i in dict[parameter]:
+                            getattr(self, parameter).append(Sensor().from_dict(i, deep=dd))
                     else:
                         #print('isvariable')
-                        getattr(self, parameter).from_dict(dict[parameter], deep = dd)
+                        getattr(self, parameter).from_dict(dict[parameter], deep=dd)
         return self
+
 
 class Module(BaseModel):
     """Model of a module
@@ -157,7 +157,7 @@ class ModuleRPC(BaseModel):
                             'rpcargtype': rpctype,
                             'optional': opt,
                             'desc': desc,
-                            'modulerpc': newrpc}for name, rpctype, opt, decr in args]
+                            'modulerpc': newrpc} for name, rpctype, opt, decr in args]
                 RPCArg.insert_many(argdict).execute()
 
     @classmethod
@@ -281,7 +281,8 @@ class Sensor(BaseModel):
         if self.instant:
             return []
         else:
-            return SensorValue.select().where(SensorValue.sensor == self).order_by(SensorValue.timestamp.desc()).limit(num).naive()
+            return SensorValue.select().where(SensorValue.sensor == self).order_by(SensorValue.timestamp.desc()).limit(
+                num).naive()
 
 
 class SensorValue(BaseModel):
@@ -303,7 +304,7 @@ class SensorValue(BaseModel):
         order_by = ('-Timestamp',)
         indexes = (
             (('Sensor', 'Timestamp'), True)
-            )
+        )
 
 
 class SensorArg(BaseModel):
@@ -402,12 +403,12 @@ class Trigger(BaseModel):
 
         :rtype: an iterator with :class:`Trigger` classes
         """
-        return Trigger.select(Trigger, Expression).join(Expression)\
-            .join(VarTrigger)\
+        return Trigger.select(Trigger, Expression).join(Expression) \
+            .join(VarTrigger) \
             .where(
-                (VarTrigger.source == self) &
-                (Trigger != self)
-                )
+            (VarTrigger.source == self) &
+            (Trigger != self)
+        )
 
     @classmethod
     def get_affected_by_trigger(cls, trigger):
@@ -420,12 +421,12 @@ class Trigger(BaseModel):
         :param trigger: The :class:`Trigger` to query for
         :rtype: an iterator with affected :class:`Trigger`
         """
-        return Trigger.select(Trigger, Expression).join(Expression)\
-            .join(VarTrigger)\
+        return Trigger.select(Trigger, Expression).join(Expression) \
+            .join(VarTrigger) \
             .where(
-                (VarTrigger.source == trigger) &
-                (Trigger.id != trigger)
-                )
+            (VarTrigger.source == trigger) &
+            (Trigger.id != trigger)
+        )
 
     @classmethod
     def get_affected_by_sensor(cls, sensor):
@@ -434,7 +435,8 @@ class Trigger(BaseModel):
         :param sensor: The sensor to query for
         :rtype: an iterator of affected :class:`Trigger` classes
         """
-        return Trigger.select(Trigger, Expression).join(Expression).join(VarSensor, JOIN_INNER).where(VarSensor.source == sensor)
+        return Trigger.select(Trigger, Expression).join(Expression).join(VarSensor, JOIN_INNER).where(
+            VarSensor.source == sensor)
 
     def add_value(self, value):
         """Add a value to the trigger
@@ -450,7 +452,8 @@ class Trigger(BaseModel):
         rtn = 0
         if self.lastvalue:
             if self.record:
-                rtn = TriggerValue.select().where(TriggerValue.trigger == self).order_by(TriggerValue.timestamp.desc()).limit(num).naive()
+                rtn = TriggerValue.select().where(TriggerValue.trigger == self).order_by(
+                    TriggerValue.timestamp.desc()).limit(num).naive()
             else:
                 rtn = self.lastvalue
         return rtn
@@ -473,7 +476,7 @@ class TriggerValue(BaseModel):
         order_by = ('-Timestamp',)
         indexes = (
             (('Trigger', 'Timestamp'), True)
-            )
+        )
 
 
 class VarSensor(BaseModel):
@@ -534,7 +537,7 @@ class ActionArg(BaseModel):
             start, end = key.split('.', 1)
             if start not in kwarg:
                 kwarg[start] = {}
-            key, value = SensorArg._to_dict(kwarg[start], end, value)
+            key, value = ActionArg._to_dict(kwarg[start], end, value)
             kwarg[start][key] = value
             print(kwarg)
             return start, kwarg[start]
@@ -559,6 +562,7 @@ class ActionArg(BaseModel):
             key, value = cls._to_dict(kwargs, rpcarg.name, value)
             kwargs[key] = value
         return kwargs
+
 
 class TriggerAction(BaseModel):
     """:class:`Trigger` to :class:`Action` mapping
@@ -612,7 +616,8 @@ class dbhandler:
                 elif driver == 'sqlite':
                     databaseconn = SqliteDatabase(database, threadlocals=True, **conf)
                 else:
-                    raise ImproperlyConfigured("Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
+                    raise ImproperlyConfigured(
+                        "Cannot use database driver {}, only mysql, postgres and sqlite are supported".format(driver))
                 if databaseconn:
                     dbconn.initialize(databaseconn)
                 else:
@@ -675,6 +680,8 @@ class dbhandler:
 
 
 class ops:
+    def __init__(self):
+        pass
 
     @staticmethod
     def operation(function):
@@ -683,7 +690,7 @@ class ops:
               'sum': ops.sumation,
               'diff': ops.diff,
               'tdiff': ops.tdiff,
-              }[function.function]
+        }[function.function]
         print('looking up value with')
         return op(function.source, function.args)
 
@@ -734,7 +741,7 @@ class ops:
             result1 = selection[0]
             result2 = selection[1]
             print(type(result1.Timestamp))
-            result = (int(result1.value) - int(result2.value))/(result1.timestamp - result2.timestamp).total_seconds()
+            result = (int(result1.value) - int(result2.value)) / (result1.timestamp - result2.timestamp).total_seconds()
         else:
             result = 0
         return result
