@@ -15,7 +15,7 @@ import pprint
 from domos.util.db import *
 
 
-class messagehandler(threading.Thread):
+class MessageHandler(threading.Thread):
     def __init__(self):
         """Create the core messagehandler. Also starts up depending threads
         """
@@ -26,7 +26,7 @@ class messagehandler(threading.Thread):
         self.rpc.log_info("starting main thread")
         self.rpc.handle(self.register, "register")
         self.rpc.handle(self.sensorValue, "sensorValue")
-        self.rpc.handle(self.addSensor, "addSensor")
+        self.rpc.handle(self.add_sensor, "add_sensor")
         rpchandle = domoslog.rpchandler(self.rpc)
         self.logger = logging.getLogger('Core')
         self.logger.addHandler(rpchandle)
@@ -80,10 +80,14 @@ class messagehandler(threading.Thread):
             sensors = Sensor.get_by_module(module)
             module.active = True
             module.save()
-            # TODO fix
-            return [SensorArg.get_dict(sensor) for sensor in sensors]
+            sensorlist = []
+            for sensor in sensors:
+                sensordict = SensorArg.get_dict(sensor)
+                sensordict['rpc'] = sensor.modulerpc.key
+                sensorlist.append(sensordict)
+            return sensorlist
 
-    def addSensor(self, module_id=0, data=None, send=False):
+    def add_sensor(self, module_id=0, data=None, send=False):
         # add sensor to the database, if send is True, also send it to the module
         self.logger.info('adding sensor from module {0} with ident {1}'.format(module_id, data['ident']))
         module = Module.get_by_id(module_id)
@@ -229,7 +233,7 @@ class domos:
     def main(self):
         logger = domoslog.rpclogger()
         logger.start()
-        msgh = messagehandler()
+        msgh = MessageHandler()
         if msgh.shutdown:
             logger.log_critical("Initialization error, shutting down", "domoscore")
             logger.end()

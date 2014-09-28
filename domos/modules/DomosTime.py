@@ -3,11 +3,14 @@
 from threading import Thread
 import domos.util.domossettings as ds
 from domos.util.rpc import rpc
+from domoslog import rpchandler
 from dashi import DashiConnection
 import socket
+import logging
 from multiprocessing import Process
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
+from collections import namedtuple
 
 ROUTING_KEY = 'sensor.time'
 CONTROL_KEY = 'control.time'
@@ -49,7 +52,19 @@ DOMOSTIME_DICT = {
 
 
 class DomosTime(Process):
+    rpc = namedtuple('rpc', ['func', 'call'])
+
+
+
     def __init__(self):
+
+        self.domostime_rpc = {"getTimers": self.get_jobs,
+                         "getTimer": self.get_job,
+                         "addTimer": self.add_job,
+                         "delTimer": self.del_job,
+                        }
+
+
         Process.__init__(self)
         self.done = False
         self.name = 'domosTime'
@@ -63,15 +78,15 @@ class DomosTime(Process):
 
     def initrpc(self):
         self.rpc = rpc(self.name)
-        self.rpc.handle(self.get_jobs, "getTimers")
-        self.rpc.handle(self.get_job, "getTimer")
-        self.rpc.handle(self.add_job, "addTimer")
-        self.rpc.handle(self.del_job, "delTimer")
-        self.log_msg('debug', 'Initializing scheduler')
+        self.logger = logging.getLogger('DomosTime')
+        self.logger.setLevel(logging.DEBUG)
+        loghandler = rpchandler(self.rpc)
+        self.logger.addHandler(loghandler)
 
-    def log_msg(self, level, msg):
-        call = 'log_{}'.format(level)
-        self.rpc.fire("log", 'log_debug', msg=msg, handle='DomosTime')
+        for call, func in self.domostime_rpc.items():
+            self.rpc.handle(func, call)
+        self.logger.debug('Initializing scheduler')
+
 
     def add_job(self, key=None,
                name=None, jobtype='Once',
@@ -125,7 +140,7 @@ class DomosTime(Process):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
     def get_jobs(self):
-        self.rpc.log_debug("All jobs requested")
+        self.logger.debug("All jobs requested")
         jobs = []
         for job in self._items:
             one = dict()
@@ -145,7 +160,7 @@ class DomosTime(Process):
         return jobs
 
     def del_job(self, key=None):
-        self.rpc.log_debug("one job deletion requested")
+        self.logger.debug("one job deletion requested")
         for job in self._items:
             if job['key'] == key:
                 # self._sched.unschedule_job(job['start'])
@@ -154,7 +169,7 @@ class DomosTime(Process):
                 self._items.remove(job)
 
     def get_job(self, key=None, name=None):
-        self.rpc.log_debug("one job requested")
+        self.logger.debug("one job requested")
         one = None
         for job in self._items:
             if job['key'] == key:
@@ -173,15 +188,17 @@ class DomosTime(Process):
     def run(self):
         self.initrpc()
         self.init_scheduler()
-        self.rpc.log_info("registering with main function")
+        self.logger.info("registering with main function")
         sensors = self.rpc.call("domoscore", "register", data=DOMOSTIME_DICT)
+        print(sensors)
         if sensors:
-            self.rpc.log_info("Succesfully registered with core")
+            self.logger.info("Succesfully registered with core")
             for sensor in sensors:
-                self.add_job(**sensor)
-        self.rpc.log_info("starting scheduler")
+                func = self.domostime_rpc[sensor.pop("rpc")]
+                func(**sensor)
+        self.logger.info("starting scheduler")
         self._sched.start()
-        self.rpc.log_info("starting RPC consumer")
+        self.logger.info("starting RPC consumer")
         while not self.done:
             self.rpc.listen()
 
