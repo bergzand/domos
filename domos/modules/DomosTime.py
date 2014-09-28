@@ -190,7 +190,6 @@ class DomosTime(Process):
         self.init_scheduler()
         self.logger.info("registering with main function")
         sensors = self.rpc.call("domoscore", "register", data=DOMOSTIME_DICT)
-        print(sensors)
         if sensors:
             self.logger.info("Succesfully registered with core")
             for sensor in sensors:
