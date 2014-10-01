@@ -32,6 +32,6 @@ class API:
             module = Module.get_by_id(module_id)
         except DoesNotExist:
             return ('404', 404)
-        ret = module.to_dict(deep=['sensors', 'rpcs', 'args'])
+        ret = module.to_dict(deep=['sensors', 'rpcs', 'args','rpctype'])
         print(ret)
         return json.dumps(ret)

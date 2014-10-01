@@ -34,71 +34,85 @@ angular
                     function ($scope, $http) {
 
                     }
-                ]).controller('NavController', [
-                                  '$scope',
-                                  '$http',
-                                  '$rootScope',
-                                  function ($scope, $http, $rootScope) {
-                                      if ($rootScope.loggedin == null) {
-                                          $rootScope.loggedin = false;
-                                      }
-                                  }
-                              ]).controller('ModulesController', [
-                                                '$scope',
-                                                '$http',
-                                                '$location',
-                                                function ($scope, $http, $location) {
-                                                    load = function () {
-                                                        $http({method: 'GET', url: '/api/getmodules'})
-                                                            .success(function (data) {
-                                                                         $scope.modules = data
-                                                                     })
-                                                    }
-                                                    load()
-                                                    $scope.openmodule = function (module) {
-                                                        console.log('redirecting to:' + '#/module/' + module.id)
-                                                        $location.path('module/' + module.id)
-                                                    }
-                                                }
-                                            ]).controller('DashiController', [
-                                                              '$scope',
-                                                              '$http',
-                                                              function ($scope, $http) {
+                ])
+    .controller('NavController', [
+        '$scope',
+        '$http',
+        '$rootScope',
+        function ($scope, $http, $rootScope) {
+            if ($rootScope.loggedin == null) {
+                $rootScope.loggedin = false;
+            }
+        }
+    ])
+    .controller('ModulesController', [
+          '$scope',
+          '$http',
+          '$location',
+          function ($scope, $http, $location) {
+              load = function () {
+                  $http({method: 'GET', url: '/api/getmodules'})
+                      .success(function (data) {
+                                   $scope.modules = data;
+                               });
+              };
+              load();
+              $scope.openmodule = function (module) {
+                  console.log('redirecting to:' + '#/module/' + module.id);
+                  $location.path('module/' + module.id);
+              };
+              
+          }
+      ])
+    .controller('DashiController', [
+          '$scope',
+          '$http',
+          function ($scope, $http) {
 
 
-                                                              }
-                                                          ]).controller('ModuleController', [
-                                                                            '$scope',
-                                                                            '$http',
-                                                                            '$location',
-                                                                            '$routeParams',
-                                                                            function ($scope, $http, $location, $routeParams) {
-                                                                                load = function () {
-                                                                                    $http({method: 'GET', url: '/api/getmodule/' + $routeParams.id})
-                                                                                        .success(function (data) {
-                                                                                                     $scope.module = data
-                                                                                                 })
-                                                                                }
-                                                                                $scope.status = {
+          }
+      ])
+    .controller('ModuleController', [
+                        '$scope',
+                        '$http',
+                        '$location',
+                        '$routeParams',
+                        function ($scope, $http, $location, $routeParams) {
+                            load = function () {
+                                $http({method: 'GET', url: '/api/getmodule/' + $routeParams.id})
+                                    .success(function (data) {
+                                                 $scope.module = data;
+                                             });
+                            }
+                            $scope.status = {
+                           
+                            };
+                            $scope.executeRPC = function(rpc){
+                                console.log('executing '+rpc.key);
+                                $http({method:'POST',url:'/api/executerpc',data:rpc})
+                                        .success(function (data) {
+                                            console.log("Execution succesfull");
+                                        })
+                            };
+                            load()
 
-                                                                                };
-                                                                                load()
-
-                                                                            }
-                                                                        ]).directive('toggleButton', function () {
-                                                                                         return {
-                                                                                             restrict: 'E',
-                                                                                             scope: {
-                                                                                                 model: '=ngModel'
-                                                                                             },
-                                                                                             templateUrl: 'content/togglebutton'
-                                                                                         }
-                                                                                     }).directive('boolIcon', function () {
-                                                                                                      return {
-                                                                                                          restrict: 'E',
-                                                                                                          scope: {
-                                                                                                              model: '=value'
-                                                                                                          },
-                                                                                                          template: "<span class=\"glyphicon\" ng-class=\"{'glyphicon-ok':model, 'glyphicon-remove': !model}\"></span>"
-                                                                                                      }
-                                                                                                  })
+                        }
+                    ])
+    .directive('toggleButton', function () {
+                 return {
+                     restrict: 'E',
+                     scope: {
+                         model: '=ngModel'
+                     },
+                     templateUrl: 'content/togglebutton'
+                 }
+             })
+    .directive('boolIcon', function () {
+             return {
+                 restrict: 'E',
+                 scope: {
+                     model: '=value'
+                 },
+                 template: "<span class=\"glyphicon\" ng-class=\"{'glyphicon-ok':model, 'glyphicon-remove': !model}\"></span>"
+             }
+         })

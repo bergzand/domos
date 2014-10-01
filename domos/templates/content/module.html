@@ -40,21 +40,29 @@
             <tr>
                 <th>Id</th>
                 <th>Key</th>
+                <th>Type</th>
                 <th>Active</th>
             </tr>
             </thead>
             <tbody>
             <tr ng-repeat-start="rpc in module.rpcs" ng-click="opened=!opened">
-                <td rowspan="{{ '{{1+opened}}' }}">{{ '{{rpc.id}}' }}</td>
-                <td>{{ '{{rpc.Key}}' }}</td>
+                <td rowspan="{{ '{{1+opened}}' }}" style="width:1%">{{ '{{rpc.id}}' }}</td>
+                <td>{{ '{{rpc.key}}' }}</td>
+                <td>{{ '{{rpc.rpctype.rpctype}}' }}</td>
                 <td>
-                    <bool-icon ng-model="sensor.Active"/>
+                     <bool-icon ng-model="rpc.arg.included"/>
                 </td>
             </tr>
             <tr ng-repeat-end ng-show="opened">
-                <td colspan="2">
+                <td colspan="3">
                     <div>
-                        <H1> test </h1>
+                        <div class="input-group input-group"  style="width:90%" ng-repeat="arg in rpc.args">
+                          <span class="input-group-addon" style="width:20%" tooltip="{{ '{{arg.des}}' }}">{{ '{{arg.name}}' }}</span>
+                          <input type="text" class="form-control"  ng-model="arg.value" placeholder="{{ '{{arg.rpcargtype}}' }}">
+                          <span class="input-group-btn" ng-show="arg.optional"><toggle-button ng-model="arg.included"/></span>
+                        </div>
+                        <span><button class="btn btn-default align-right"  type="button" ng-click="executeRPC(rpc)">Execute</button></span>
+
                     </div>
                 </td>
             </tr>

@@ -4,18 +4,18 @@ import socket
 import sys
 from threading import Thread
 import argparse
-from domos.server import domos as Server
-from domos.client import Client
+from domos.server import domos as server
+from domos.client import client
 from domos.domosweb import domosweb as web
 
 
 def domosclient(args):
-    client = Client(args)
+    client = client(args)
     client.main()
 
 
 def domosserver(args):
-    dom = Server(args)
+    dom = server(args)
     dom.main()
 
 
