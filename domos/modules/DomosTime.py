@@ -48,7 +48,7 @@ DOMOSTIME_DICT = {
 }
 
 
-class domosTime(Process):
+class DomosTime(Process):
     def __init__(self):
         Process.__init__(self)
         self.done = False
@@ -58,22 +58,22 @@ class domosTime(Process):
         self.rpc = None
 
 
-    def initScheduler(self):
+    def init_scheduler(self):
         self._sched = BackgroundScheduler()
 
     def initrpc(self):
         self.rpc = rpc(self.name)
-        self.rpc.handle(self.getJobs, "getTimers")
-        self.rpc.handle(self.getJob, "getTimer")
-        self.rpc.handle(self.addJob, "addTimer")
-        self.rpc.handle(self.delJob, "delTimer")
-        self.logmsg('debug', 'Initializing scheduler')
+        self.rpc.handle(self.get_jobs, "getTimers")
+        self.rpc.handle(self.get_job, "getTimer")
+        self.rpc.handle(self.add_job, "addTimer")
+        self.rpc.handle(self.del_job, "delTimer")
+        self.log_msg('debug', 'Initializing scheduler')
 
-    def logmsg(self, level, msg):
+    def log_msg(self, level, msg):
         call = 'log_{}'.format(level)
         self.rpc.fire("log", 'log_debug', msg=msg, handle='DomosTime')
 
-    def addJob(self, key=None,
+    def add_job(self, key=None,
                name=None, jobtype='Once',
                start=None, stop=None):
         returnvalue = False
@@ -86,13 +86,13 @@ class domosTime(Process):
             newjob = dict()
             if stop:
                 # True job
-                newjob['start'] = self._sched.add_job(self._jobTrue,
+                newjob['start'] = self._sched.add_job(self._job_true,
                                                       args=[key, name],
                                                       trigger='cron',
                                                       name=name,
                                                       **start)
                 #false job
-                newjob['stop'] = self._sched.add_job(self._jobFalse,
+                newjob['stop'] = self._sched.add_job(self._job_false,
                                                      args=[key, name],
                                                      trigger='cron',
                                                      name=name,
@@ -102,7 +102,7 @@ class domosTime(Process):
                 newjob['type'] = jobtype
                 returnvalue = True
             else:
-                newjob['start'] = self._sched.add_job(self._jobOnce,
+                newjob['start'] = self._sched.add_job(self._job_once,
                                                       args=[key, name],
                                                       trigger='cron',
                                                       name=name,
@@ -115,16 +115,16 @@ class domosTime(Process):
             self._items.append(newjob)
         return returnvalue
 
-    def _jobTrue(self, key, name):
+    def _job_true(self, key, name):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
-    def _jobFalse(self, key, name):
+    def _job_false(self, key, name):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='0')
 
-    def _jobOnce(self, key, name):
+    def _job_once(self, key, name):
         self.rpc.fire("domoscore", 'sensorValue', key=key, value='1')
 
-    def getJobs(self):
+    def get_jobs(self):
         self.rpc.log_debug("All jobs requested")
         jobs = []
         for job in self._items:
@@ -144,7 +144,7 @@ class domosTime(Process):
             jobs.append(one)
         return jobs
 
-    def delJob(self, key=None):
+    def del_job(self, key=None):
         self.rpc.log_debug("one job deletion requested")
         for job in self._items:
             if job['key'] == key:
@@ -153,7 +153,7 @@ class domosTime(Process):
                     self._sched.unschedule_job(job['stop'])
                 self._items.remove(job)
 
-    def getJob(self, key=None, name=None):
+    def get_job(self, key=None, name=None):
         self.rpc.log_debug("one job requested")
         one = None
         for job in self._items:
@@ -172,13 +172,13 @@ class domosTime(Process):
 
     def run(self):
         self.initrpc()
-        self.initScheduler()
+        self.init_scheduler()
         self.rpc.log_info("registering with main function")
         sensors = self.rpc.call("domoscore", "register", data=DOMOSTIME_DICT)
         if sensors:
             self.rpc.log_info("Succesfully registered with core")
             for sensor in sensors:
-                self.addJob(**sensor)
+                self.add_job(**sensor)
         self.rpc.log_info("starting scheduler")
         self._sched.start()
         self.rpc.log_info("starting RPC consumer")
@@ -187,6 +187,6 @@ class domosTime(Process):
 
 
 if __name__ == '__main__':
-    dt = domosTime()
+    dt = DomosTime()
     dt.start()
     dt.join()

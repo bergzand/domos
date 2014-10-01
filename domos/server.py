@@ -3,7 +3,7 @@ import domos.util.domossettings as ds
 from domos.util.domossettings import domosSettings
 import domos.util.domoslog as domoslog
 from domos.util.rpc import rpc
-from domos.modules.domosTime import domosTime
+from domos.modules.DomosTime import DomosTime
 from domos.handlers import *
 import threading
 import multiprocessing
@@ -103,6 +103,7 @@ class messagehandler(threading.Thread):
 
         :param key: key of the sensor, also the primary key of the sensor in the database
         :param value: new value to send to the database
+        :param timestamp: Timestamp of the value, leave empty to set it as the current time
         """
 
         try:
@@ -175,7 +176,7 @@ class apihandler(threading.Thread):
         return [(sensor.ident,
                  sensor.Instant,
                  sensor.Active,
-                 sensor.Module.name,
+                 sensor.ModuleRPC.Module.name,
                  sensor.descr) for sensor in sensors]
 
     def listSensorArgs(self, sensor=None):
@@ -234,7 +235,7 @@ class domos:
             logger.end()
         else:
             msgh.start()
-            dt = domosTime()
+            dt = DomosTime()
             dt.start()
             msgh.rpc.log_info('waiting for modules to register')
             msgh.join()

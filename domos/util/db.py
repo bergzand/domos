@@ -216,7 +216,7 @@ class Sensor(BaseModel):
                     ('active', 'active'),
                     ('instant', 'instant'),
                     ('desc', 'des')]
-    module = ForeignKeyField(Module, related_name='sensors', on_delete='CASCADE')
+    modulerpc = ForeignKeyField(ModuleRPC, related_name='sensors', on_delete='CASCADE')
     name = CharField()
     active = BooleanField(default=True)
     instant = BooleanField(default=False)
@@ -251,7 +251,7 @@ class Sensor(BaseModel):
         :param module: The :class:`Module` object or ID to
         :rtype: An iterator with :class:`Sensor` classes
         """
-        return Sensor.select(Sensor, Module).join(Module).where(Sensor.module == module)
+        return Sensor.select(Sensor, ModuleRPC).join(ModuleRPC).where(ModuleRPC.module == module)
 
     @classmethod
     def get_by_name(cls, name):
@@ -305,6 +305,10 @@ class SensorValue(BaseModel):
         indexes = (
             (('Sensor', 'Timestamp'), True)
         )
+
+    @classmethod
+    def insert_many(cls, rows):
+        return super().insert_many(rows)
 
 
 class SensorArg(BaseModel):
@@ -513,11 +517,11 @@ class VarTrigger(BaseModel):
 
 class Action(BaseModel):
     """Actions to send to a module
-    module: The :class:`Module` to send the action to
+    modulerpc: The :class:`ModuleRPC` to send the action to
     ident: Identifier for this action
     """
     translations = [('name', 'name')]
-    module = ForeignKeyField(Module, related_name='actions')
+    modulerpc = ForeignKeyField(ModuleRPC, related_name='actions')
     name = CharField()
 
 
