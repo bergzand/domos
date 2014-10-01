@@ -35,11 +35,13 @@ class DashiThread(Thread):
             self.rpc.log_error("Exception: {0}".format(type(err)))
             self.addaccepted = False
         else:
+            self.addaccepted = True
             self.rpc.handle(self.addshellinput, "addshellinput")
             self.rpc.handle(self.receive, "outputtoshell")
-            for sensor in response:
-                self.addshellinput(**sensor)
-                # wait for add
+            if response:
+                for sensor in response:
+                    self.addshellinput(**sensor)
+                    # wait for add
 
     def sendvalue(self, value):
         if self.addaccepted:
