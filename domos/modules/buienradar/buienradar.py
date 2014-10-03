@@ -1,10 +1,13 @@
+import urllib.request
 from domos.util.rpc import rpc
-from dashi import DashiConnection
+from domos.util.domoslog import rpchandler
+import logging
 import multiprocessing
-from datetime import datetime, timedelta, time
-import urllib
+import threading
+from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from collections import namedtuple
+from domos.util.domossettings import domosSettings
 
 BUIENRADAR_URL = "http://gps.buienradar.nl/getrr.php?"
 BUIENRADAR_DICT = {
@@ -14,13 +17,13 @@ BUIENRADAR_DICT = {
         {"key": "rain_at", "type": "add", "desc": "Expected rain level at minutes in the future", "args": [
             {"name": "lat", "type": "float", "optional": "False", "desc": "Latitude to check for rain"},
             {"name": "lon", "type": "float", "optional": "False", "desc": "longitude to check for rain"},
-            {"name": "minutes", "type": "int", "optional": "False", "desc": "minutes in the future, up to 1.5 hours"},
+            {"name": "minute", "type": "int", "optional": "False", "desc": "minutes in the future, up to 1.5 hours"},
         ]
         },
         {"key": "rain_max", "type": "add", "desc": "Expected rain level at minutes in the future", "args": [
             {"name": "lat", "type": "float", "optional": "False", "desc": "Latitude to check for rain"},
             {"name": "lon", "type": "float", "optional": "False", "desc": "longitude to check for rain"},
-            {"name": "minutes", "type": "int", "optional": "False", "desc": "minutes in the future, up to 1.5 hours"},
+            {"name": "minute", "type": "int", "optional": "False", "desc": "minutes in the future, up to 1.5 hours"},
         ]
         },
     ],
@@ -34,21 +37,48 @@ class BuienRadar(multiprocessing.Process):
     def __init__(self):
         """Creates a BuienRadar class
         """
+        self.buienradar_rpc = {"rain_at": self.rain_at,
+                               "rain_max": self.rain_max
+                               }
 
         multiprocessing.Process.__init__(self)
+        self.name = 'buienradar'
         self.shutdown = False
         self._sched = None
         self._rain = []
 
-    def init_scheduler(self):
+    def _init_rpc(self):
+        self.rpc = rpc(self.name)
+
+        self.logger = logging.getLogger('BuienRadar')
+        loghandler = rpchandler(self.rpc)
+        self.logger.addHandler(loghandler)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(domosSettings.getLoggingLevel('BuienRadar'))
+
+
+        for call, func in self.buienradar_rpc.items():
+            self.rpc.handle(func, call)
+        self.logger.debug('Initializing scheduler')
+
+    def _init_scheduler(self):
         """Initializes the scheduler to poll every five minutes and start it
         """
         self._sched = BackgroundScheduler()
         self._sched.add_job(self._check_rain, trigger='cron', minute='*/5')
         self._sched.start()
 
+    def _register(self):
+        sensors = self.rpc.call("domoscore", "register", data=BUIENRADAR_DICT)
+        if sensors:
+            for sensor in sensors:
+                func = self.buienradar_rpc[sensor.pop("rpc")]
+                func(**sensor)
+        self.logger.debug("Registered with core")
+
+
     def _check_rain(self):
-        print("checking rain")
+        self.logger.debug("checking rain")
         for rain in self._rain:
             future_rain = {}
             url = "{0}lat={1}&lon={2}".format(BUIENRADAR_URL, rain.lat, rain.lon)
@@ -56,11 +86,12 @@ class BuienRadar(multiprocessing.Process):
                 for line in f.read().decode('utf-8').splitlines():
                     rain_level, time_measure = line.split('|')
                     future_rain[time_measure] = int(rain_level)
-            print(rain.func(future_rain, rain))
+            value = rain.func(future_rain, rain)
+            self.rpc.fire("domoscore", "sensorValue", key=rain.key, value=value)
 
     @staticmethod
     def _calc_rain_mm(level):
-        return round(10**((int(level)-109)/32), 3)
+        return round(10**((int(level) - 109) / 32), 3)
 
     def _max(self, rain_measure, rain):
         """
@@ -83,6 +114,7 @@ class BuienRadar(multiprocessing.Process):
                     rain_datetime += timedelta(days=1)
                 if rain_datetime < needed_datetime:
                     max_rain = rain_level
+
         return BuienRadar._calc_rain_mm(max_rain)
 
     def _at(self, rain_measure, rain):
@@ -91,10 +123,9 @@ class BuienRadar(multiprocessing.Process):
                                                        seconds=needed_datetime.second,
                                                        microseconds=needed_datetime.microsecond)
         rounded_time = rounded_datetime.strftime('%H:%M')
-        rain_mm = BuienRadar._calc_rain_mm(rain_measure[rounded_time])
-        print("Rain is expected to be: %.2fmm" % rain_mm, "at", rounded_time)
+        return BuienRadar._calc_rain_mm(rain_measure[rounded_time])
 
-    def rain_at(self, key=None, lat=None, lon=None, minute=0):
+    def rain_at(self, key=None, name=None, lat=None, lon=None, minute=0):
         """
 
         :param key: A key to distinguish sensors
@@ -103,15 +134,18 @@ class BuienRadar(multiprocessing.Process):
         :param minute: The number of minutes in the future to check until
         :return: A three decimal floating point representing the amount of rain in mm/hour at minutes in the future
         """
-        print(key, lat, lon, minute)
-        if key and lat and lon and minute:
-            new_rain = Rain(key, lat, lon, minute, self._at)
-            self._rain.append(new_rain)
-            return True
-        else:
+        self.logger.info("added sensor for rain at %s : %s for %s minutes" % (lat, lon, minute))
+        if not (key and lat and lon and minute):
             return False
+        try:
+            minute = int(minute)
+        except:
+            return False
+        new_rain = Rain(key, lat, lon, minute, self._at)
+        self._rain.append(new_rain)
+        return True
 
-    def rain_max(self, key=None, lat=None, lon=None, minute=0):
+    def rain_max(self, key=None, name=None, lat=None, lon=None, minute=0):
         """Calculate the maximum amount of rain between now and now+minute
         Remote procedure to be called by the core of Domos
 
@@ -121,8 +155,12 @@ class BuienRadar(multiprocessing.Process):
         :param minute: The number of minutes in the future to check until
         :return: A three decimal floating point representing the maximum amount of rain in mm/hour
         """
-        print(key, lat, lon, minute)
+        self.logger.info("added sensor for rain max %s : %s for %s minutes" % (lat, lon, minute))
         if key and lat and lon and minute:
+            try:
+                minute = int(minute)
+            except:
+                return False
             new_rain = Rain(key, lat, lon, minute, self._max)
             self._rain.append(new_rain)
             return True
@@ -130,11 +168,19 @@ class BuienRadar(multiprocessing.Process):
             return False
 
     def run(self):
-        self.init_scheduler()
-        #gps coordinates of the corner of Limburg(NL)
-        self.rain_max('1', 50.791026, 5.9689, minute=70)
+        self._init_rpc()
+        self._init_scheduler()
+        self._register()
+        self.logger.info("starting mod_buienradar")
+        #gps coordinates of north France
         while True:
-            pass
+            self.rpc.listen()
+
+def start():
+    br = BuienRadar()
+    br.start()
+
+
 
 if __name__ == "__main__":
     print("starting")

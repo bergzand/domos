@@ -1,19 +1,13 @@
-from dashi import DashiConnection
-import domos.util.domossettings as ds
-from domos.util.domossettings import domosSettings
+import os
+import importlib
+
+import importlib.machinery
 import domos.util.domoslog as domoslog
 from domos.util.rpc import rpc
-from domos.modules.DomosTime import DomosTime
 from domos.handlers import *
-import threading
-import multiprocessing
-import socket
-import peewee
-import logging
-from time import sleep
-import pprint
 from domos.util.db import *
-
+from domostime import domostime
+from collections import namedtuple
 
 class MessageHandler(threading.Thread):
     def __init__(self):
@@ -44,7 +38,7 @@ class MessageHandler(threading.Thread):
             self.db.create_tables()
             self.db.init_tables()
             self.logger.info("Done initializing database")
-            self.triggerchecker = triggerChecker(loghandler=rpchandle)
+            self.triggerchecker = TriggerChecker(loghandler=rpchandle)
             self.triggerqueue = self.triggerchecker.getqueue()
             self.triggerchecker.start()
             self.actionhandler = actionhandler(self.rpc, loghandler=rpchandle)
@@ -225,24 +219,63 @@ class apihandler(threading.Thread):
 
 
 class domos:
+
+    module = namedtuple("module", ['name', 'module', 'process'])
+
     def __init__(self, args):
         self.args = args
         self.configfile = args.configfile
+        self.modulelist = []
+        self.settings = ds.domosSettings.get_core_config()
         ds.domosSettings.setConfigFile(self.configfile)
+
+    def _get_files(self, mod_root_dir):
+        self.logger.info("getting al modules from %s", mod_root_dir)
+        #build a list of file in the hookdir
+        for mod_name in os.listdir(mod_root_dir):
+            mod_dir = os.path.join(mod_root_dir, mod_name)
+            if os.path.isdir(mod_dir) and mod_name != "__pycache__":
+                self.logger.debug("found mod mod_name: %s", mod_name)
+                mod_file = mod_name +'.py'
+                mod_path = os.path.join(mod_dir, mod_file)
+                yield mod_path, mod_name
+
+    def _module_loader(self, dir):
+        working_dir = os.getcwd()
+        print(working_dir)
+        if type(dir) is list:
+            for moddir in dir:
+                if not os.path.isabs(moddir):
+                    moddir = os.path.join(working_dir, moddir)
+                for file, mod_name in self._get_files(moddir):
+                    print("modfile is:", file)
+                    #self.logger.debug("importing module %s" % mod)
+                    mod = importlib.machinery.SourceFileLoader(mod_name, file)
+                    module = mod.load_module()
+                    module.start()
+                    self.logger.info("Loaded module %s" % mod_name)
+                    self.modulelist.append(domos.module(mod_name, module, None))
+
+        #for module in self.modulelist:
+        #    self.logger.info(dir(module.loaded_module))
 
     def main(self):
         logger = domoslog.rpclogger()
         logger.start()
         msgh = MessageHandler()
         if msgh.shutdown:
-            logger.log_critical("Initialization error, shutting down", "domoscore")
-            logger.end()
+            self.logger.log_critical("Initialization error, shutting down", "domoscore")
         else:
             msgh.start()
-            dt = DomosTime()
-            dt.start()
+            self.rpc = rpc('Main')
+            rpchandle = domoslog.rpchandler(self.rpc)
+            self.logger = logging.getLogger('Main')
+            self.logger.addHandler(rpchandle)
+            self.logger.setLevel(domosSettings.getLoggingLevel('core'))
+            self._module_loader(self.settings['module_dir'])
             msgh.rpc.log_info('waiting for modules to register')
             msgh.join()
+
 
     @staticmethod
     def parsersettings(parser):

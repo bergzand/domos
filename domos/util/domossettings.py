@@ -13,7 +13,7 @@ class domosSettings:
 
     dbdefault = dict(user="user", host="localhost", password="password", driver="mysql", database="domos")
     defaultconfig = 'defaults.cfg'
-    configpath = None
+    configpath = "domos.cfg"
 
     dashidefault = dict(sysname="domos", exchange="domos", amqp_uri="amqp://")
     config = None
@@ -63,6 +63,13 @@ class domosSettings:
     def getExchangeConfig():
         config = domosSettings._readConfig()
         return dict(config.items(domosSettings.dashisection))
+
+    @staticmethod
+    def get_core_config():
+        config = domosSettings._readConfig()
+        cfg = {}
+        cfg['module_dir'] = shlex.split(config.get(domosSettings.coresection, 'module_dir', fallback = None))
+        return cfg
 
     @staticmethod
     def getLoggingConfig():

@@ -3,7 +3,7 @@
 from threading import Thread
 import domos.util.domossettings as ds
 from domos.util.rpc import rpc
-from domoslog import rpchandler
+from domos.util.domoslog import rpchandler
 from dashi import DashiConnection
 import socket
 import logging
@@ -201,6 +201,16 @@ class DomosTime(Process):
         while not self.done:
             self.rpc.listen()
 
+
+def start():
+    dt = DomosTime()
+    dt.start()
+
+def stop():
+    pass
+
+def status():
+    pass
 
 if __name__ == '__main__':
     dt = DomosTime()
