@@ -6,7 +6,6 @@ import domos.util.domoslog as domoslog
 from domos.util.rpc import rpc
 from domos.handlers import *
 from domos.util.db import *
-from domostime import domostime
 from collections import namedtuple
 
 class MessageHandler(threading.Thread):
@@ -226,8 +225,8 @@ class domos:
         self.args = args
         self.configfile = args.configfile
         self.modulelist = []
-        self.settings = ds.domosSettings.get_core_config()
         ds.domosSettings.setConfigFile(self.configfile)
+        self.settings = ds.domosSettings.get_core_config()
 
     def _get_files(self, mod_root_dir):
         self.logger.info("getting al modules from %s", mod_root_dir)
